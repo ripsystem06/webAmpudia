@@ -1,0 +1,61 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Create React App 5 (react-scripts), React 19.2, React Router 7.15, JavaScript, CSS (plain)
+  Architecture: SPA, component-based (src/components/, src/pages/), no state mgmt lib, inline styles
+  Package manager: pnpm
+  Testing: Jest via react-scripts, @testing-library/react, @testing-library/jest-dom
+  Project: Alan Ampudia — motorsports portfolio site
+
+strict_tdd: true
+
+testing:
+  runner:
+    command: "npm test"
+    framework: "Jest (react-scripts test)"
+  layers:
+    unit:
+      available: true
+      tool: "@testing-library/react + Jest"
+    integration:
+      available: true
+      tool: "@testing-library/react + @testing-library/user-event"
+    e2e:
+      available: false
+      tool: "—"
+  coverage:
+    available: true
+    command: "npm test -- --coverage"
+  quality:
+    linter:
+      available: true
+      command: "npx eslint src/"
+    type_checker:
+      available: false
+      command: "—"
+    formatter:
+      available: false
+      command: "—"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns (inline styles, CSS variables, .jsx components)
+    tdd: true
+    test_command: "npm test"
+  verify:
+    test_command: "npm test"
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

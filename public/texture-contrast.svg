@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <pattern id="cross" patternUnits="userSpaceOnUse" width="24" height="24">
+      <rect width="24" height="24" fill="#1a0010"/>
+      <rect x="0" y="0" width="12" height="12" fill="#0a0008"/>
+      <rect x="12" y="12" width="12" height="12" fill="#0a0008"/>
+      <line x1="0" y1="12" x2="24" y2="12" stroke="#B0144A" stroke-width="2"/>
+      <line x1="12" y1="0" x2="12" y2="24" stroke="#B0144A" stroke-width="2"/>
+    </pattern>
+  </defs>
+  <rect width="200" height="200" fill="#B0144A"/>
+  <rect width="200" height="200" fill="url(#cross)"/>
+</svg>

@@ -1,0 +1,46 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SDD artifacts
+.atl/
+
+# env files
+.env
+.env.*
+
+# AI / editor configs
+.agents/
+.opencode/
+.openspec/
+.pi/
+.pi-lens/
+.claude/
+
+# Docs
+DESIGN.md
+
+# Project archives / temp
+ALAN AMPUDIA/
+ALAN WEB PAGE/
+TÉRMINOS Y CONDICIONES DE USO Y VENTA.docx
+*.zip
