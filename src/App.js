@@ -14,12 +14,15 @@ import Legal from './pages/Legal';
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    // useEffect dispara post-paint → el DOM ya está estable
-    // requestAnimationFrame asegura que el layout final esté resuelto
-    let raf = requestAnimationFrame(() => {
-      window.scrollTo(0, 0);
-    });
-    return () => cancelAnimationFrame(raf);
+    // behavior: 'instant' sobrescribe el scroll-behavior: smooth del CSS
+    // y garantiza que sea un salto inmediato, no animado
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // Segundo scroll a los 150ms para absorber layout shifts tardíos
+    // (imágenes, fuentes, animaciones que desplacen el contenido)
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 150);
+    return () => clearTimeout(timer);
   }, [pathname]);
   return null;
 }
