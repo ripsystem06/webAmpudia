@@ -141,7 +141,7 @@ export default function Footer() {
                   textTransform: 'uppercase',
                 }}>Páginas</h4>
                 {pages.map(p => (
-                  <a key={p.label} href={p.to} style={{
+                  <Link key={p.label} to={p.to} style={{
                     fontFamily: 'Anton, sans-serif',
                     fontSize: 'clamp(0.8rem, 1.4vw, 1.25rem)',
                     color: '#FFFFFF',
@@ -151,7 +151,7 @@ export default function Footer() {
                   }}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--magenta-bright)'}
                   onMouseLeave={e => e.currentTarget.style.color = '#FFFFFF'}
-                  >{p.label.toUpperCase()}</a>
+                  >{p.label.toUpperCase()}</Link>
                 ))}
                 <a
                   href="https://www.alanampudia.store"
@@ -254,7 +254,7 @@ export default function Footer() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', textAlign: 'center' }}>
                   <h4 style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.5rem', letterSpacing: '0.3em', color: 'rgba(255,255,255,0.5)', margin: 0, textTransform: 'uppercase' }}>Páginas</h4>
                   {pages.map(p => (
-                    <a key={p.label} href={p.to} style={{ fontFamily: 'Anton, sans-serif', fontSize: '0.85rem', color: '#FFFFFF', textDecoration: 'none', letterSpacing: '0.04em' }}>{p.label.toUpperCase()}</a>
+                    <Link key={p.label} to={p.to} style={{ fontFamily: 'Anton, sans-serif', fontSize: '0.85rem', color: '#FFFFFF', textDecoration: 'none', letterSpacing: '0.04em' }}>{p.label.toUpperCase()}</Link>
                   ))}
                   <a href="https://www.alanampudia.store" target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'Anton, sans-serif', fontSize: '0.9rem', color: 'var(--magenta-bright)', textDecoration: 'none', letterSpacing: '0.06em' }}>TIENDA ↗</a>
                   <Link to="/legal" style={{ fontFamily: 'Anton, sans-serif', fontSize: '0.7rem', color: 'var(--white-dim)', textDecoration: 'none', letterSpacing: '0.04em', marginTop: '0.5rem' }}>TÉRMINOS Y CONDICIONES</Link>
