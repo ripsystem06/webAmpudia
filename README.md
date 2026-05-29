@@ -1,70 +1,77 @@
-# Getting Started with Create React App
+# Alan Ampudia — Sitio Web Oficial
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Sitio web oficial del piloto profesional de off-road **Alan Ampudia**, Campeón Mundial SCORE Trophy Truck 2024 y piloto del dorsal #1 del Team Papas.
 
-## Available Scripts
+## 🏁 Stack
 
-In the project directory, you can run:
+- **React 19** + **React Router 7**
+- **Vite 7** (build tool)
+- **pnpm** (package manager)
+- **GSAP** + ScrollTrigger (animaciones)
+- **WebGL** (hero interactivo con shaders)
+- CSS-in-JS (estilos inline)
 
-### `npm start`
+## 📄 Páginas
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+| Ruta | Página |
+|------|--------|
+| `/` | Home — Hero interactivo, perfil, galería, patrocinadores |
+| `/en-pista` | En Pista — Carreras, stats, animación de casco, Team Papas, cuenta regresiva |
+| `/fuera-de-pista` | Fuera de Pista — Biografía, mentalidad, Más Que Un Color, YouTube, Instagram |
+| `/calendario` | Calendario 2026 — Próximas carreras con countdowns individuales |
+| `/equipo` | Equipo — Miembros del Team Papas, galería, protocolo post-race |
+| `/legal` | Términos Legales — MX, US y Global (privacidad, cookies, DMCA, CCPA) |
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🚀 Desarrollo
 
-### `npm test`
+```bash
+pnpm install
+pnpm dev        # http://localhost:3000
+pnpm build      # producción → dist/
+pnpm preview    # previsualizar build
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 📦 Despliegue
 
-### `npm run build`
+Optimizado para **Vercel**:
+- Framework: Vite
+- Build: `npx vite build`
+- Output: `dist`
+- Install: `pnpm install`
+- SPA fallback configurado (react-router)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🎨 Diseño
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Paleta: negro (#050505), magenta (#E91E63), blanco
+- Tipografías: Anton (títulos), Barlow Condensed (texto), JetBrains Mono (código), Permanent Marker (detalles)
+- Tema oscuro con acentos magenta
+- Animaciones de entrada con IntersectionObserver
+- Carruseles infinitos de patrocinadores
+- Efectos WebGL en hero (liquid ink reveal)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 📁 Estructura
 
-### `npm run eject`
+```
+public/
+├── fueradepista/     # Imágenes para Fuera de Pista
+├── images/
+│   ├── copiloto/     # Kyle "El K"
+│   ├── mom/          # Alan con su mamá
+│   └── team/         # Team Papas
+├── patrocinadores/   # Logos SVG sponsors
+├── specTT/           # Fotos y video del Trophy Truck
+└── clean-opt/        # Frames animación de casco (36 frames)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+src/
+├── components/       # Componentes React
+├── pages/            # Páginas (rutas)
+└── App.js            # Router + ScrollToTop
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 👤 Autor
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Desarrollado para **Alan Ampudia / Team Papas Racing** — Ensenada, Baja California, México.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+© 2026 Alan Ampudia. Todos los derechos reservados.
