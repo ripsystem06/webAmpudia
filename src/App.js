@@ -11,18 +11,30 @@ import Equipo from './pages/Equipo';
 import Tienda from './pages/Tienda';
 import Legal from './pages/Legal';
 
+function scrollToTop() {
+  // scrollTop directo → elude CSS scroll-behavior: smooth
+  // (behavior: 'instant' no es estándar y falla en algunos browsers)
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    // behavior: 'instant' sobrescribe el scroll-behavior: smooth del CSS
-    // y garantiza que sea un salto inmediato, no animado
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    // Segundo scroll a los 150ms para absorber layout shifts tardíos
-    // (imágenes, fuentes, animaciones que desplacen el contenido)
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    }, 150);
-    return () => clearTimeout(timer);
+    scrollToTop();
+
+    // RAF: después del primer paint (absorbe layout shifts tempranos)
+    const raf = requestAnimationFrame(scrollToTop);
+
+    // Timers progresivos para contenido que carga tarde (imágenes, GSAP)
+    const t100 = setTimeout(scrollToTop, 100);
+    const t300 = setTimeout(scrollToTop, 300);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t100);
+      clearTimeout(t300);
+    };
   }, [pathname]);
   return null;
 }
