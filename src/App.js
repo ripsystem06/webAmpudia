@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import LogoIntro from './components/LogoIntro';
 import Navbar from './components/Navbar';
@@ -13,7 +13,12 @@ import Legal from './pages/Legal';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+  useLayoutEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 }
 
