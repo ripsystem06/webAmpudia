@@ -647,7 +647,7 @@ export default function FueraDePista() {
               marginTop: 'clamp(0.8rem, 1.5vw, 1.2rem)',
             }}>
               <a
-                href="https://www.youtube.com/@alanampudia"
+                href="https://www.youtube.com/@alanamp"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

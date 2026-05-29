@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import LogoIntro from './components/LogoIntro';
 import Navbar from './components/Navbar';
@@ -14,11 +14,16 @@ import Legal from './pages/Legal';
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-  }, []);
-  useLayoutEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+    // behavior: 'instant' sobrescribe el scroll-behavior: smooth del CSS
+    // y garantiza que sea un salto inmediato, no animado
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // Segundo scroll a los 150ms para absorber layout shifts tardíos
+    // (imágenes, fuentes, animaciones que desplacen el contenido)
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [pathname]);
   return null;
 }
 

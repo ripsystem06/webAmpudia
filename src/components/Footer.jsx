@@ -12,10 +12,10 @@ const pages = [
 ];
 
 const socials = [
-  { name: 'Facebook', href: 'https://facebook.com/alanampudia' },
-  { name: 'TikTok', href: 'https://tiktok.com/@alanampudia' },
-  { name: 'YouTube', href: 'https://youtube.com/@alanampudia' },
-  { name: 'Instagram', href: 'https://instagram.com/alanampudia' },
+  { name: 'Facebook', href: 'https://www.facebook.com/ampudia10' },
+  { name: 'TikTok', href: 'https://www.tiktok.com/@alan_amp' },
+  { name: 'YouTube', href: 'https://www.youtube.com/@alanamp' },
+  { name: 'Instagram', href: 'https://www.instagram.com/alan_amp/' },
 ];
 
 export default function Footer() {
