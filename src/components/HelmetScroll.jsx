@@ -100,15 +100,18 @@ export default function HelmetShowcase() {
           lastFrame.current = idx;
         }
 
-        const w = 500 - p * 320;
-        const h = 330 - p * 210;
+        const w = 980 - p * 800;
+        const h = 644 - p * 524;
         const xPos = -60 + p * 60;
         const br = p * 8;
+
+        const yOff = window.innerWidth < 768 ? '10vh' : '0vh';
 
         gsap.set(wrap, {
           width: `${w}px`,
           height: `${h}px`,
           x: `${xPos}vw`,
+          y: yOff,
           borderRadius: `${br}px`,
         });
       },
@@ -124,10 +127,12 @@ export default function HelmetShowcase() {
         setShowStatic(false);
         ctx.clearRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
         ctx.drawImage(loaded[0], 0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+        const isMobileReset = window.innerWidth < 768;
         gsap.set(wrap, {
-          width: '500px',
-          height: '330px',
+          width: '980px',
+          height: '644px',
           x: '-60vw',
+          y: isMobileReset ? '10vh' : '0vh',
           borderRadius: '0px',
         });
         if (container) {
@@ -136,7 +141,12 @@ export default function HelmetShowcase() {
       },
     });
 
-    ScrollTrigger.refresh();
+    // Delay refresh to account for ScrollToTop / browser scroll restoration
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+      });
+    });
 
     return () => st.kill();
   }, [status]);
@@ -163,8 +173,8 @@ export default function HelmetShowcase() {
         <div
           ref={wrapRef}
           style={{
-            width: '500px',
-            height: '330px',
+            width: '980px',
+            height: '644px',
             position: 'relative',
             overflow: 'hidden',
           }}
@@ -203,7 +213,7 @@ export default function HelmetShowcase() {
         <div
           style={{
             position: 'absolute',
-            top: `${staticTopRef.current}px`,
+            top: `${staticTopRef.current + (window.innerWidth < 768 ? window.innerHeight * 0.1 : 0)}px`,
             left: '50%',
             transform: 'translate(-50%, -50%)',
             width: '180px',

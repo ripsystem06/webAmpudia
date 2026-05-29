@@ -4,6 +4,12 @@ import HelmetShowcase from '../components/HelmetScroll';
 
 const temporadas = [
   {
+    year: '2026',
+    carreras: [
+      { nombre: 'SCORE San Felipe 250', fecha: 'Mar 2026', posicion: '10°', clase: '4WD Vehicles - Pro', tiempo: '6:48:20', estado: 'Completada', nota: '281.85 mi — 43.5 mph promedio' },
+    ],
+  },
+  {
     year: '2025',
     carreras: [
       { nombre: 'SCORE San Felipe 250', fecha: 'Mar 2025', posicion: '1°', clase: '1° TT', tiempo: '03:55:13', estado: 'Victoria', nota: '3 victorias consecutivas iniciadas' },
@@ -708,7 +714,7 @@ function HeroSection() {
 }
 
 export default function EnPista() {
-  const [activeYear, setActiveYear] = useState('2025');
+  const [activeYear, setActiveYear] = useState('2026');
   const [expandedRace, setExpandedRace] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -884,7 +890,7 @@ export default function EnPista() {
 
       {/* Race List - Accordion Style */}
       <div style={{ padding: 'clamp(1.5rem, 4vw, 4rem)', maxWidth: '1000px', margin: '0 auto' }}>
-        {activeYear === '2025' && (
+        {activeYear === temporadas[0].year && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
             padding: '0.4rem 1rem',

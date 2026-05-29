@@ -46,7 +46,10 @@ export default function Navbar() {
     <>
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001,
-        padding: '0 1.4rem', height: '67px',
+        paddingLeft: 'clamp(1.5rem, 4vw, 3.5rem)',
+        paddingRight: 'clamp(1.5rem, 3vw, 3rem)',
+        paddingTop: '0.5rem',
+        height: '80px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: inHero ? '#fff' : 'transparent',
         borderBottom: '1px solid transparent',
