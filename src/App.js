@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import LogoIntro from './components/LogoIntro';
 import Navbar from './components/Navbar';
@@ -14,11 +14,13 @@ import Legal from './pages/Legal';
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
-    }
-  }, []);
-  useLayoutEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+    // useEffect dispara post-paint → el DOM ya está estable
+    // requestAnimationFrame asegura que el layout final esté resuelto
+    let raf = requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [pathname]);
   return null;
 }
 
