@@ -716,7 +716,7 @@ export default function EnPista() {
     '/specTT/SanFelipe250-DSchenkelberg-191.jpg',
     '/specTT/SanFelipe250-DSchenkelberg-201.jpg',
     '/specTT/SanFelipe250-DSchenkelberg-205.jpg',
-    '/specTT/SanFelipe250-DSchenkelberg-524.jpg',
+    '/images/ontrack/trophy1.jpg',
   ];
 
   const estadoT = (estado) => {
