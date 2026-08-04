@@ -112,7 +112,7 @@ export default function Calendario() {
             margin: 0,
           }}>
             {t('calendario.title').split('\n').map((line, li) => (
-              <span key={li} style={{ display: 'block', color: li === 1 ? 'var(--magenta)' : undefined }}>{line}</span>
+              <span key={li} style={{ color: li === 1 ? 'var(--magenta)' : undefined }}>{line}</span>
             ))}
           </h1>
           <p style={{
