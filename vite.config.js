@@ -18,6 +18,13 @@ export default defineConfig({
   build: {
     outDir: 'build',
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        '.js': 'jsx',
+      },
+    },
+  },
   server: {
     port: 3000,
     allowedHosts: [
