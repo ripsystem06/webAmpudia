@@ -4,6 +4,14 @@ import { useLanguage } from '../context/LanguageContext';
 const carreras2026 = [
   {
     num: '01',
+    nombre: 'SCORE San Felipe 250',
+    lugar: 'San Felipe, B.C.',
+    fecha: '25 – 29 Marzo 2026',
+    targetDate: 'March 25, 2026 00:00:00',
+    descKey: 'calendario.sanfelipe250_desc',
+  },
+  {
+    num: '02',
     nombre: 'SCORE Baja 500',
     lugar: 'Ensenada, B.C.',
     fecha: '3 – 7 Junio 2026',
@@ -11,7 +19,7 @@ const carreras2026 = [
     descKey: 'calendario.baja500_desc',
   },
   {
-    num: '02',
+    num: '03',
     nombre: 'SCORE Baja 400',
     lugar: 'Ensenada, B.C.',
     fecha: '9 – 13 Septiembre 2026',
@@ -19,7 +27,7 @@ const carreras2026 = [
     descKey: 'calendario.baja400_desc',
   },
   {
-    num: '03',
+    num: '04',
     nombre: 'SCORE Baja 1000',
     lugar: 'Ensenada → La Paz, B.C.',
     fecha: '9 – 15 Noviembre 2026',
@@ -76,6 +84,8 @@ function RaceCountdown({ targetDate }) {
 
 export default function Calendario() {
   const { t } = useLanguage();
+  const now = new Date();
+  const firstUpcomingIdx = carreras2026.findIndex(c => new Date(c.targetDate) > now);
   return (
     <div style={{ paddingTop: '67px', minHeight: '100vh', background: 'var(--black)' }}>
       {/* Header */}
@@ -135,20 +145,28 @@ export default function Calendario() {
         margin: '0 auto',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(1rem, 2vw, 1.5rem)' }}>
-          {carreras2026.map((carrera, i) => (
+          {carreras2026.map((carrera, i) => {
+            const isPast = new Date(carrera.targetDate) < now;
+            const isNext = i === firstUpcomingIdx;
+            return (
             <div key={i} style={{
               padding: 'clamp(1.5rem, 3vw, 2.5rem)',
-              background: i === 0
+              background: isNext
                 ? 'rgba(233,30,99,0.08)'
-                : 'rgba(233,30,99,0.04)',
-              border: i === 0
+                : isPast
+                  ? 'rgba(233,30,99,0.02)'
+                  : 'rgba(233,30,99,0.04)',
+              border: isNext
                 ? '1px solid rgba(233,30,99,0.4)'
-                : '1px solid rgba(233,30,99,0.12)',
+                : isPast
+                  ? '1px solid rgba(233,30,99,0.06)'
+                  : '1px solid rgba(233,30,99,0.12)',
               position: 'relative',
               overflow: 'hidden',
+              opacity: isPast ? 0.65 : 1,
             }}>
-              {/* Left accent bar for current race */}
-              {i === 0 && (
+              {/* Left accent bar for next race */}
+              {isNext && (
                 <div style={{
                   position: 'absolute',
                   left: 0, top: 0, bottom: 0,
@@ -210,17 +228,19 @@ export default function Calendario() {
                   letterSpacing: '0.2em',
                   textTransform: 'uppercase',
                   padding: '0.4rem 0.9rem',
-                  border: '1px solid var(--magenta-bright)',
-                  color: 'var(--magenta-bright)',
+                  border: isPast ? '1px solid rgba(233,30,99,0.3)' : '1px solid var(--magenta-bright)',
+                  color: isPast ? 'rgba(233,30,99,0.5)' : 'var(--magenta-bright)',
                 }}>
-                  <span style={{
-                    width: '5px',
-                    height: '5px',
-                    borderRadius: '50%',
-                    background: 'var(--magenta-bright)',
-                    animation: 'blink 2s infinite',
-                  }} />
-                  {i === 0 ? t('calendario.proxima') : t('calendario.preparacion')}
+                  {!isPast && (
+                    <span style={{
+                      width: '5px',
+                      height: '5px',
+                      borderRadius: '50%',
+                      background: 'var(--magenta-bright)',
+                      animation: 'blink 2s infinite',
+                    }} />
+                  )}
+                  {isPast ? t('calendario.completada') : isNext ? t('calendario.proxima') : t('calendario.preparacion')}
                 </div>
               </div>
 
@@ -246,15 +266,16 @@ export default function Calendario() {
                 <div style={{
                   fontFamily: 'JetBrains Mono, monospace',
                   fontSize: '0.7rem',
-                  color: 'var(--magenta-bright)',
+                  color: isPast ? 'var(--white-dim)' : 'var(--magenta-bright)',
                   letterSpacing: '0.08em',
                 }}>
                   {carrera.fecha}
                 </div>
-                <RaceCountdown targetDate={carrera.targetDate} />
+                {!isPast && <RaceCountdown targetDate={carrera.targetDate} />}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Footer info */}
