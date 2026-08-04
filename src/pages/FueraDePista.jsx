@@ -198,12 +198,13 @@ export default function FueraDePista() {
           <AnimatedBlock delay={0.4}>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: window.innerWidth < 768 ? '1fr 1fr' : 'repeat(4, 1fr)',
+              gridTemplateColumns: window.innerWidth < 768 ? '1fr 1fr 1fr' : 'repeat(5, 1fr)',
               gap: '1px',
               background: 'rgba(233,30,99,0.15)',
               border: '1px solid rgba(233,30,99,0.15)',
             }}>
               {[
+                { num: '2025', label: t('fueradepista.campeon_mundial_2025') },
                 { num: '2024', label: t('fueradepista.campeon_mundial') },
                 { num: '2019', label: t('fueradepista.baja1000_absoluto') },
                 { num: '3X', label: t('fueradepista.triple_corona_baja') },
