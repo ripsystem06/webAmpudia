@@ -674,19 +674,36 @@ function HeroSection() {
             padding: isMobile ? '0.5rem' : 'clamp(0.5rem, 1.5vw, 1.5rem)',
           }}>
             <TrackGlowSVG />
-            <img
-              src="/scorelogo.svg"
-              alt="SCORE International"
-              style={{
-                position: 'absolute',
-                right: isMobile ? '0.5rem' : '1rem',
-                bottom: isMobile ? '0.5rem' : '1rem',
-                width: isMobile ? 'clamp(70px, 18vw, 100px)' : 'clamp(82px, 8vw, 120px)',
-                height: 'auto',
-                opacity: 0.72,
-                filter: 'grayscale(1) brightness(0.72)',
-              }}
-            />
+            <div style={{
+              position: 'absolute',
+              right: isMobile ? '0.5rem' : '1rem',
+              bottom: isMobile ? '0.5rem' : '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: '0.35rem',
+            }}>
+              <span style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 'clamp(0.48rem, 0.7vw, 0.62rem)',
+                letterSpacing: '0.18em',
+                color: 'rgba(233, 30, 99, 0.72)',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}>
+                THE NEXT TRACK
+              </span>
+              <img
+                src="/scorelogo.svg"
+                alt="SCORE International"
+                style={{
+                  width: isMobile ? 'clamp(70px, 18vw, 100px)' : 'clamp(82px, 8vw, 120px)',
+                  height: 'auto',
+                  opacity: 0.72,
+                  filter: 'grayscale(1) brightness(0.72)',
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
