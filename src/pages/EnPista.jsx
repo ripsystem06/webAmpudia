@@ -649,44 +649,45 @@ function HeroSection() {
         </div>
         </div>{/* end left column */}
 
-        {/* SCORE Logo + reveal message */}
+        {/* PISTA track animation */}
         <div style={{
           flex: isMobile ? 'none' : '0 0 50%',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: isMobile ? '1rem 0' : '2rem',
+          padding: isMobile ? '1rem 0 0' : '2rem 0 2rem 2rem',
           width: isMobile ? '100%' : undefined,
-          maxWidth: isMobile ? '400px' : undefined,
+          maxWidth: isMobile ? '460px' : undefined,
           margin: isMobile ? '0 auto' : undefined,
           marginTop: isMobile ? '1.8rem' : 0,
-          gap: 'clamp(1.5rem, 3vw, 2.5rem)',
           opacity: heroVisible ? 1 : 0,
           transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'all 0.8s ease 0.3s',
         }}>
           <div style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 'clamp(0.7rem, 1.2vw, 0.85rem)',
-            letterSpacing: '0.3em',
-            color: 'var(--magenta-bright)',
-            textTransform: 'uppercase',
-            textAlign: 'center',
-            animation: 'blink 2s infinite',
+            position: 'relative',
+            width: '100%',
+            minHeight: isMobile ? 'min(72vw, 400px)' : 'min(68vh, 640px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: isMobile ? '0.5rem' : 'clamp(0.5rem, 1.5vw, 1.5rem)',
           }}>
-            {t('enpista.revelacion_pista')}
+            <TrackGlowSVG />
+            <img
+              src="/scorelogo.svg"
+              alt="SCORE International"
+              style={{
+                position: 'absolute',
+                right: isMobile ? '0.5rem' : '1rem',
+                bottom: isMobile ? '0.5rem' : '1rem',
+                width: isMobile ? 'clamp(70px, 18vw, 100px)' : 'clamp(82px, 8vw, 120px)',
+                height: 'auto',
+                opacity: 0.72,
+                filter: 'grayscale(1) brightness(0.72)',
+              }}
+            />
           </div>
-          <img
-            src="/scorelogo.svg"
-            alt="SCORE International"
-            style={{
-              width: '100%',
-              maxWidth: '308px',
-              height: 'auto',
-              filter: 'drop-shadow(0 0 30px rgba(233,30,99,0.3))',
-            }}
-          />
         </div>
       </div>
 
