@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import TrackGlowSVG from '../components/TrackGlowSVG';
 import VideoSocialsBlock from '../components/VideoSocialsBlock';
 
 const temporadas = [
   {
     year: '2026',
     carreras: [
+      { nombre: 'SCORE Baja 400', fecha: 'Sep 2026', posicion: '4°', clase: 'SCORE TROPHY TRUCKS 4-WHEEL', tiempo: '8:50:56.168', estado: 'Completada', millas: '—', mph: '—' },
       { nombre: 'SCORE BAJA 500', fecha: 'Jun 2026', posicion: '2°', clase: 'Trophy Truck', tiempo: '9:11:06.665', estado: 'Completada', millas: '—', mph: '—' },
       { nombre: 'SCORE San Felipe 250', fecha: 'Mar 2026', posicion: '10°', clase: '4WD Vehicles - Pro', tiempo: '6:48:20.865', estado: 'Completada', millas: '281.85', mph: '43.50' },
     ],
@@ -596,8 +596,8 @@ function HeroSection() {
           transform: heroVisible ? 'translateY(0)' : 'translateY(30px)',
           transition: 'all 0.8s ease 0.2s',
         }}>
-          7th<br />
-          <span style={{ color: 'var(--magenta)' }}>SCORE BAJA 400</span>
+          59th<br />
+          <span style={{ color: 'var(--magenta)' }}>SCORE BAJA 1000</span>
         </h1>
 
         {/* Event Details */}
@@ -616,7 +616,7 @@ function HeroSection() {
             color: 'var(--white-soft)',
             letterSpacing: '0.05em',
           }}>
-            400+ miles of Baja terrain
+            1,000+ miles of Baja terrain
           </div>
           <div style={{
             fontFamily: 'JetBrains Mono, monospace',
@@ -624,7 +624,7 @@ function HeroSection() {
             color: 'var(--white-dim)',
             letterSpacing: '0.15em',
           }}>
-            Ensenada, Baja California — Sept 9–13, 2026
+            San José del Cabo, Baja Sur — Nov 9, 2026
           </div>
         </div>
 
@@ -645,11 +645,11 @@ function HeroSection() {
           }}>
             {t('common.tiempo_salida')}
           </div>
-          <CountdownTimer targetDate="September 9, 2026 00:00:00" />
+          <CountdownTimer targetDate="2026-11-09T00:00:00-07:00" />
         </div>
         </div>{/* end left column */}
 
-        {/* PISTA track animation */}
+        {/* BAJA 1000 hero logo block */}
         <div style={{
           flex: isMobile ? 'none' : '0 0 50%',
           display: 'flex',
@@ -673,34 +673,55 @@ function HeroSection() {
             justifyContent: 'center',
             padding: isMobile ? '0.5rem' : 'clamp(0.5rem, 1.5vw, 1.5rem)',
           }}>
-            <TrackGlowSVG />
             <div style={{
-              position: 'absolute',
-              right: isMobile ? '0.5rem' : '1rem',
-              bottom: isMobile ? '0.5rem' : '1rem',
+              position: 'relative',
+              width: '50%',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-end',
-              gap: '0.35rem',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}>
-              <span style={{
-                fontFamily: 'JetBrains Mono, monospace',
-                fontSize: 'clamp(0.48rem, 0.7vw, 0.62rem)',
-                letterSpacing: '0.18em',
-                color: 'rgba(233, 30, 99, 0.72)',
+              <div style={{
+                position: 'absolute',
+                top: isMobile ? '-1.25rem' : '-2rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontFamily: 'Anton, sans-serif',
+                fontSize: isMobile ? 'clamp(0.85rem, 3.2vw, 1.2rem)' : 'clamp(1rem, 1.6vw, 1.35rem)',
+                letterSpacing: '0.1em',
+                color: 'var(--magenta)',
                 textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
+                textShadow: '0 0 18px rgba(233,30,99,0.35)',
+                zIndex: 2,
               }}>
-                THE NEXT TRACK
-              </span>
+                {t('enpista.track_reveal')}
+              </div>
               <img
-                src="/scorelogo.svg"
-                alt="SCORE International"
+                src="/BAJA100.png"
+                alt="59th SCORE Baja 1000"
                 style={{
-                  width: isMobile ? 'clamp(70px, 18vw, 100px)' : 'clamp(82px, 8vw, 120px)',
+                  width: '100%',
                   height: 'auto',
-                  opacity: 0.72,
-                  filter: 'grayscale(1) brightness(0.72)',
+                  maxHeight: isMobile ? 'min(36vw, 200px)' : 'min(34vh, 320px)',
+                  objectFit: 'contain',
+                  display: 'block',
+                  opacity: 0,
+                }}
+              />
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: 'var(--magenta)',
+                  WebkitMaskImage: 'url(/BAJA100.png)',
+                  maskImage: 'url(/BAJA100.png)',
+                  WebkitMaskSize: 'contain',
+                  maskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskPosition: 'center',
                 }}
               />
             </div>
@@ -824,7 +845,7 @@ export default function EnPista() {
           opacity: headerVisible ? 1 : 0, transition: 'opacity 0.8s ease 0.4s',
         }}>
           {[
-            { num: '2', label: t('enpista.campeonatos_mundiales') },
+            { num: '2', label: t('enpista.campeonato_mundial') },
             { num: '1', label: t('enpista.triple_corona') },
             { num: '8', label: t('enpista.podiums') },
             { num: '290:54', label: t('enpista.total_horas') },
@@ -1361,7 +1382,7 @@ export default function EnPista() {
       />
 
       {/* Countdown Section — minimal inline, no boxes */}
-      <CountdownInline targetDate="September 9, 2026 00:00:00" />
+      <CountdownInline targetDate="2026-11-09T00:00:00-07:00" />
     </div>
   );
 }

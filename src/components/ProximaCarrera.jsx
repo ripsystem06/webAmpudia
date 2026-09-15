@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 const nextRace = {
-  name: 'SCORE Baja 400',
-  edition: '7° EDICIÓN',
-  location: 'Ensenada, B.C.',
-  date: new Date('2026-09-09T06:00:00-08:00'),
-  distance: '400+ MI',
+  name: 'SCORE Baja 1000',
+  edition: '59° EDICIÓN',
+  location: 'San José del Cabo, Baja Sur',
+  date: new Date('2026-11-09T00:00:00-07:00'),
+  distance: '1000+ MI',
   category: 'TROPHY TRUCK',
 };
 
@@ -59,7 +59,7 @@ export default function ProximaCarrera() {
         color: 'transparent',
         WebkitTextStroke: '2px rgba(0,0,0,0.1)',
         lineHeight: 0.85, userSelect: 'none', pointerEvents: 'none',
-      }}>400</div>
+      }}>1000</div>
 
       <div style={{ maxWidth: '1300px', margin: '0 auto', position: 'relative' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '4rem', alignItems: 'center' }}>
@@ -188,7 +188,7 @@ export default function ProximaCarrera() {
                 {t('common.fecha_largada')}
               </span>
               <span style={{ fontFamily: 'Anton, sans-serif', fontSize: '1.2rem', color: 'var(--magenta-bright)', letterSpacing: '0.03em' }}>
-                9 SEPT 2026 / 06:00 PT
+                9 NOV 2026 / 00:00 UTC-7
               </span>
             </div>
           </div>

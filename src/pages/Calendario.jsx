@@ -29,9 +29,9 @@ const carreras2026 = [
   {
     num: '04',
     nombre: 'SCORE Baja 1000',
-    lugar: 'Ensenada → La Paz, B.C.',
-    fecha: '9 – 15 Noviembre 2026',
-    targetDate: 'November 9, 2026 00:00:00',
+    lugar: 'San José del Cabo, Baja Sur',
+    fecha: '9 Noviembre 2026',
+    targetDate: '2026-11-09T00:00:00-07:00',
     descKey: 'calendario.baja1000_desc',
   },
 ];
