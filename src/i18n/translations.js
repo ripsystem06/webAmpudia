@@ -84,7 +84,7 @@ const translations = {
     // ── En Pista ──
     'enpista.title': 'EN\nPISTA',
     'enpista.watermark': 'EN PI STA',
-    'enpista.track_reveal': 'Pista próxima a revelarse',
+    'enpista.track_reveal': 'UNA NUEVA PISTA.\nUN NUEVO DESAFÍO.',
     'enpista.historial_label': 'Historial de Competencia',
     'enpista.sub': 'Resultados, victorias y momentos definitorios en la máxima categoría del off-road mundial.',
     'enpista.campeonato_mundial': 'Campeonato Mundial',
@@ -360,7 +360,7 @@ const translations = {
     // ── En Pista ──
     'enpista.title': 'ON\nTRACK',
     'enpista.watermark': 'ON TRACK',
-    'enpista.track_reveal': 'Course reveal coming soon',
+    'enpista.track_reveal': 'A NEW COURSE.\nA NEW CHALLENGE.',
     'enpista.historial_label': 'Race History',
     'enpista.sub': 'Results, victories and defining moments in the highest category of world off-road.',
     'enpista.campeonato_mundial': 'World Championship',

@@ -513,9 +513,199 @@ function TeamSection() {
   );
 }
 
+const COURSE_SVG_URL = '/pistabaja1000.svg';
+const COURSE_SVG_FALLBACK_VIEWBOX = '0 0 1080 1080';
+// Loads the authored course path from the same-origin public SVG and paints a
+// stroke-only tracer that travels the complete compound path in a seamless loop.
+function CourseTrace({ stageRef }) {
+  const [course, setCourse] = useState(null);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const routePathRef = useRef(null);
+  const trailGlowRef = useRef(null);
+  const trailCoreRef = useRef(null);
+  const markerRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReduceMotion(media.matches);
+    onChange();
+    media.addEventListener?.('change', onChange);
+    return () => media.removeEventListener?.('change', onChange);
+  }, []);
+
+  // Keep the current magenta mask as the fallback: render nothing until the
+  // authored path parses, and stay silent on any fetch or parse failure.
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const response = await fetch(COURSE_SVG_URL, { credentials: 'same-origin' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const markup = await response.text();
+        const doc = new DOMParser().parseFromString(markup, 'image/svg+xml');
+        if (doc.querySelector('parsererror')) throw new Error('invalid svg');
+        const pathEl = doc.querySelector('path[d]');
+        const d = pathEl?.getAttribute('d');
+        if (!d) throw new Error('course path missing');
+        // The authored path contains two closed edges of the same course ribbon.
+        // Follow one complete closed edge; tracing both sequentially looks like a return trip.
+        const circuit = d.match(/[Mm][^Mm]*/)?.[0]?.trim();
+        if (!circuit || !/[Zz]$/.test(circuit)) throw new Error('closed course contour missing');
+        if (!cancelled) {
+          setCourse({
+            d: circuit,
+            viewBox: doc.querySelector('svg')?.getAttribute('viewBox') || COURSE_SVG_FALLBACK_VIEWBOX,
+          });
+        }
+      } catch {
+        if (!cancelled) setCourse(null);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Travel one closed contour in the requested reverse direction. The glowing
+  // paths sample only the section behind the circular marker, so there is no
+  // dash sweep and no mid-course reversal.
+  useEffect(() => {
+    const routePath = routePathRef.current;
+    const stage = stageRef.current;
+    const trailGlow = trailGlowRef.current;
+    const trailCore = trailCoreRef.current;
+    const marker = markerRef.current;
+    if (!routePath || !stage || !trailGlow || !trailCore || !marker) return undefined;
+
+    let total = 0;
+    try { total = routePath.getTotalLength(); } catch { total = 0; }
+    if (!total) return undefined;
+
+    if (reduceMotion) {
+      stage.style.transform = 'rotateX(45deg) rotateZ(0deg) translateZ(22px)';
+      const staticPoint = routePath.getPointAtLength(total * 0.9);
+      marker.setAttribute('transform', `translate(${staticPoint.x} ${staticPoint.y}) rotate(0)`);
+      marker.setAttribute('visibility', 'visible');
+      trailGlow.setAttribute('d', '');
+      trailCore.setAttribute('d', '');
+      return undefined;
+    }
+
+    const durationMs = 12000;
+    const tailLength = total * 0.025;
+    const sampleCount = 16;
+    let startTime;
+    let frameId;
+
+    const pointAt = (distance) => {
+      const wrappedDistance = ((distance % total) + total) % total;
+      return routePath.getPointAtLength(wrappedDistance);
+    };
+
+    const animate = (now) => {
+      if (startTime === undefined) startTime = now;
+      const elapsed = (now - startTime) % durationMs;
+      const progress = (elapsed / durationMs) * total;
+      const rotation = (elapsed / durationMs) * 360;
+      const distance = (total - progress) % total;
+      const head = pointAt(distance);
+      stage.style.transform = `rotateX(45deg) rotateZ(${rotation}deg) translateZ(22px)`;
+      marker.setAttribute('transform', `translate(${head.x} ${head.y}) rotate(${-rotation})`);
+      marker.setAttribute('visibility', 'visible');
+
+      const points = [];
+      for (let index = 0; index <= sampleCount; index += 1) {
+        const trailDistance = distance + tailLength - (tailLength * index) / sampleCount;
+        const point = pointAt(trailDistance);
+        points.push(`${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`);
+      }
+      const trail = points.join(' ');
+      trailGlow.setAttribute('d', trail);
+      trailCore.setAttribute('d', trail);
+      frameId = window.requestAnimationFrame(animate);
+    };
+
+    frameId = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [course, reduceMotion, stageRef]);
+
+  if (!course) return null;
+
+  return (
+    <svg
+      viewBox={course.viewBox}
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+      focusable="false"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        display: 'block',
+        pointerEvents: 'none',
+        overflow: 'visible',
+        transformStyle: 'preserve-3d',
+        zIndex: 3,
+      }}
+    >
+      <defs>
+        <filter id="enpista-trace-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2" result="enpista-trace-blur" />
+          <feMerge>
+            <feMergeNode in="enpista-trace-blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="enpista-marker-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="6" result="enpista-marker-blur" />
+          <feMerge>
+            <feMergeNode in="enpista-marker-blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      {/* This invisible geometry preserves the authored compound course path for sampling. */}
+      <path
+        ref={routePathRef}
+        d={course.d}
+        fill="none"
+        stroke="none"
+      />
+      <path
+        ref={trailGlowRef}
+        fill="none"
+        stroke="#ff4fa3"
+        strokeWidth="9"
+        strokeOpacity="0.42"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter="url(#enpista-trace-glow)"
+      />
+      <path
+        ref={trailCoreRef}
+        fill="none"
+        stroke="#ffe3f1"
+        strokeWidth="3"
+        strokeOpacity="0.95"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <g ref={markerRef} visibility="hidden">
+        <circle r="20" fill="#ff4fa3" opacity="0.72" filter="url(#enpista-marker-glow)" />
+        <circle r="10" fill="#fff4fa" stroke="#ff4fa3" strokeWidth="3" />
+      </g>
+    </svg>
+  );
+}
+
 function HeroSection() {
   const { t } = useLanguage();
   const heroRef = useRef();
+  const courseStageRef = useRef(null);
   const [heroVisible, setHeroVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -545,7 +735,10 @@ function HeroSection() {
         alignItems: isMobile ? 'center' : 'stretch',
         justifyContent: 'center',
         minHeight: '100vh',
-        padding: isMobile ? '4rem 2rem' : '4rem clamp(2rem, 6vw, 6rem)',
+        paddingTop: '10vh',
+        paddingRight: isMobile ? '2rem' : 'clamp(2rem, 6vw, 6rem)',
+        paddingBottom: '4rem',
+        paddingLeft: isMobile ? '2rem' : 'clamp(2rem, 6vw, 6rem)',
         textAlign: isMobile ? 'center' : 'left',
       }}>
         {/* Left column */}
@@ -675,55 +868,69 @@ function HeroSection() {
           }}>
             <div style={{
               position: 'relative',
-              width: '50%',
+              width: 'min(100%, 480px)',
+              aspectRatio: '1',
+              perspective: '900px',
+              transformStyle: 'preserve-3d',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
             }}>
               <div style={{
                 position: 'absolute',
-                top: isMobile ? '-1.25rem' : '-2rem',
+                bottom: '100%',
                 left: '50%',
                 transform: 'translateX(-50%)',
+                marginBottom: isMobile ? '0.6rem' : '1rem',
+                width: 'max-content',
+                maxWidth: '100%',
+                textAlign: 'center',
                 fontFamily: 'Anton, sans-serif',
-                fontSize: isMobile ? 'clamp(0.85rem, 3.2vw, 1.2rem)' : 'clamp(1rem, 1.6vw, 1.35rem)',
+                fontSize: isMobile ? 'clamp(1.02rem, 3.84vw, 1.44rem)' : 'clamp(1.2rem, 1.92vw, 1.62rem)',
                 letterSpacing: '0.1em',
                 color: 'var(--magenta)',
                 textTransform: 'uppercase',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'pre-line',
+                lineHeight: 1.2,
                 textShadow: '0 0 18px rgba(233,30,99,0.35)',
-                zIndex: 2,
+                zIndex: 3,
               }}>
                 {t('enpista.track_reveal')}
               </div>
               <img
+                className="enpista-baja-logo-shadow"
                 src="/BAJA100.png"
-                alt="59th SCORE Baja 1000"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: isMobile ? 'min(36vw, 200px)' : 'min(34vh, 320px)',
-                  objectFit: 'contain',
-                  display: 'block',
-                  opacity: 0,
-                }}
-              />
-              <div
+                alt=""
                 aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundColor: 'var(--magenta)',
-                  WebkitMaskImage: 'url(/BAJA100.png)',
-                  maskImage: 'url(/BAJA100.png)',
-                  WebkitMaskSize: 'contain',
-                  maskSize: 'contain',
-                  WebkitMaskRepeat: 'no-repeat',
-                  maskRepeat: 'no-repeat',
-                  WebkitMaskPosition: 'center',
-                  maskPosition: 'center',
-                }}
               />
+              <div ref={courseStageRef} className="enpista-course-stage" style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 2,
+                transformStyle: 'preserve-3d',
+              }}>
+                <div className="enpista-course-visual">
+                  <div
+                    role="img"
+                    aria-label="SCORE Baja 1000 course map"
+                    className="enpista-course-art"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      backgroundColor: 'var(--magenta)',
+                      WebkitMaskImage: 'url(/pistabaja1000.svg)',
+                      maskImage: 'url(/pistabaja1000.svg)',
+                      WebkitMaskSize: 'contain',
+                      maskSize: 'contain',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                      WebkitMaskPosition: 'center',
+                      maskPosition: 'center',
+                    }}
+                  />
+                  <CourseTrace stageRef={courseStageRef} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -737,6 +944,41 @@ function HeroSection() {
         @keyframes pulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(233,30,99,0.4); }
           50% { box-shadow: 0 0 20px 5px rgba(233,30,99,0.2); }
+        }
+        /* Static Baja 1000 logo used as the soft shadow behind the course map. */
+        .enpista-baja-logo-shadow {
+          position: absolute;
+          left: 50%;
+          bottom: -6%;
+          z-index: 1;
+          width: 100%;
+          height: 120%;
+          object-fit: contain;
+          transform: translateX(-50%) perspective(900px) rotateX(72deg) scale(1.2);
+          transform-origin: center bottom;
+          filter: brightness(0) invert(1) blur(4px);
+          opacity: 0.1;
+          pointer-events: none;
+        }
+        .enpista-course-stage {
+          transform-style: preserve-3d;
+          transform: rotateX(45deg) rotateZ(0deg) translateZ(22px);
+          will-change: transform;
+        }
+        .enpista-course-visual {
+          position: absolute;
+          inset: 0;
+          transform: scale(1.2);
+          transform-style: preserve-3d;
+        }
+        .enpista-course-art {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .enpista-course-stage { animation: none; }
+          .enpista-course-art { animation: none; }
         }
       `}</style>
     </div>
