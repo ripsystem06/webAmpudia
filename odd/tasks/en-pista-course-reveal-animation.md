@@ -42,5 +42,5 @@ Polish the `/en-pista` hero with a circular route marker, a slimmer light trail,
 - Work-unit commits on `feat/en-pista-course-and-video-update`: `1caf31a` (`feat(en-pista): add circular course trace and aligned logo shadow`) and `9178cc4` (`fix(social): update embedded YouTube video`).
 - The first commit includes the authored `public/pistabaja1000.svg` required by the mask and this task document; the second updates all three YouTube embed callsites.
 - Root PNGs and `.playwright-mcp/` browser artifacts were intentionally excluded.
-- Target branch: `main`; the feature branch will be fast-forwarded to it before the requested push.
+- Target branch `main` was fast-forwarded from `feat/en-pista-course-and-video-update` and pushed to `origin/main` at `28ca567`.
 - Rollback boundary: ECR commit changes `src/pages/EnPista.jsx`, `src/i18n/translations.js`, and `public/pistabaja1000.svg`; video commit changes only the three `VideoSocialsBlock` videoId props.
