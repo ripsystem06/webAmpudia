@@ -22,7 +22,7 @@ export default function Home() {
       <ProductosPromo />
       <Patrocinadores />
       <VideoSocialsBlock
-        videoId="KDerIuQkjIM"
+        videoId="4s_CE5xVTbk"
         instagramLinks={[
           { post: 'https://www.instagram.com/p/C5y6U9OS2QK/', img: '/fueradepista/corriendo.webp', label: 'Competencia' },
           { post: 'https://www.instagram.com/p/DY2owLGPc5m/', img: '/fueradepista/BAJA500-06072025-DSchenkelberg-1725.webp', label: 'Behind the Scenes' },
