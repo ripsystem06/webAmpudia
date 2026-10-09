@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "vite build",
+    "build": "node scripts/fetch-latest-video.mjs && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {

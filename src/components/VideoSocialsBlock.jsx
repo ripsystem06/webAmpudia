@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { getLatestYoutubeVideoId } from '../lib/latestYoutubeVideo';
 import './VideoSocialsBlock.css';
 
 export default function VideoSocialsBlock({ videoId, instagramLinks = [], className = '' }) {
@@ -16,7 +17,12 @@ export default function VideoSocialsBlock({ videoId, instagramLinks = [], classN
     return () => obs.disconnect();
   }, []);
 
-  const showVideo = videoId && videoId.trim() !== '';
+  // undefined opts into the build-time latest video; an explicit null or empty
+  // string keeps the placeholder, and any explicit non-empty id still wins.
+  const resolvedVideoId =
+    videoId === undefined ? getLatestYoutubeVideoId() : videoId;
+
+  const showVideo = resolvedVideoId && resolvedVideoId.trim() !== '';
 
   const gridItems = (instagramLinks || []).filter(Boolean);
 
@@ -89,7 +95,7 @@ export default function VideoSocialsBlock({ videoId, instagramLinks = [], classN
             boxShadow: '0 0 30px rgba(233,30,99,0.1)',
           }}>
             <iframe
-              src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+              src={`https://www.youtube.com/embed/${resolvedVideoId}?rel=0`}
               title={t('socials.youtube_title')}
               style={{
                 position: 'absolute',
