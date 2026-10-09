@@ -103,6 +103,101 @@ function loadTex(gl, img, unit) {
 const DISP_W = 512
 const DISP_H = 512
 
+// 10% larger than the original 55-unit reveal brush.
+export const REVEAL_RADIUS = 60.5
+// A pointer that has been quiet this long lets the idle path take over.
+export const IDLE_DELAY_MS = 2000
+export const TABLET_MAX_WIDTH = 1024
+// Lemniscate (infinity) angular speed in radians per second.
+// One full loop is 2*PI / AUTO_SPEED ~= 3.5s.
+export const AUTO_SPEED = 1.8
+// The CPU mask pass (stamp + decay + texture upload) runs on this cadence
+// (~30 FPS) while the shader keeps drawing every display frame.
+export const MASK_UPDATE_INTERVAL_MS = 33
+// Ink strength of an automatic stamp.
+export const AUTO_STAMP_STRENGTH = 0.85
+
+// Lemniscate of Bernoulli, normalised to the 0..1 canvas space.
+export function figureEightPosition(t, { cx = 0.5, cy = 0.5, ax = 0.35, ay = 0.98 } = {}) {
+  const sinT = Math.sin(t)
+  const denom = 1 + sinT * sinT
+  return {
+    x: cx + ax * (Math.cos(t) / denom),
+    y: cy + ay * ((sinT * Math.cos(t)) / denom),
+  }
+}
+
+// Deterministic stamp set for the automatic path: one clean brush dot on the
+// infinity curve, no random splatter, so the pass is stable and repeatable.
+export function autoStampPoints(phase, { radius = REVEAL_RADIUS, strength = AUTO_STAMP_STRENGTH } = {}) {
+  const { x, y } = figureEightPosition(phase)
+  return [{ x, y, radius, strength }]
+}
+
+// The mask pass is skipped on display frames that land inside the cadence
+// window, so a 60 FPS loop never scans/uploads the whole buffer every frame.
+// `lastRefreshAt: -Infinity` is used to force a pass on the next frame
+// (pointer stamps stay visually immediate).
+export function shouldRefreshMask({ now, lastRefreshAt, intervalMs = MASK_UPDATE_INTERVAL_MS } = {}) {
+  return now - lastRefreshAt >= intervalMs
+}
+
+// Coarse pointers and narrow viewports get the automatic, non-interactive path.
+export function isTouchOnlyDevice({
+  coarsePointer = false,
+  viewportWidth = TABLET_MAX_WIDTH,
+  tabletMaxWidth = TABLET_MAX_WIDTH,
+} = {}) {
+  return Boolean(coarsePointer) || viewportWidth <= tabletMaxWidth
+}
+
+// The idle path runs on touch-only devices, and on desktop only after inactivity.
+export function shouldAutoReveal({
+  touchOnly = false,
+  reducedMotion = false,
+  now = 0,
+  lastActivityAt = -Infinity,
+  idleDelayMs = IDLE_DELAY_MS,
+} = {}) {
+  if (reducedMotion) return false
+  if (touchOnly) return true
+  return now - lastActivityAt >= idleDelayMs
+}
+
+// Paint one radial reveal stamp into an RGBA buffer and return how many
+// pixels were written. Kept pure so the pixel maths is testable without WebGL.
+export function fillStamp(data, normX, normY, radius = REVEAL_RADIUS, strength = 0.85, width = DISP_W, height = DISP_H) {
+  const cx  = Math.round(normX * width)
+  const cy  = Math.round(normY * height)
+  const r   = Math.max(1, radius)
+  const r2  = r * r
+  // radius can be fractional (60.5), so walk integer pixels and test against r2.
+  const min = Math.floor(-r)
+  const max = Math.ceil(r)
+  let written = 0
+
+  for (let dy = min; dy <= max; dy++) {
+    for (let dx = min; dx <= max; dx++) {
+      const dist2 = dx * dx + dy * dy
+      if (dist2 > r2) continue
+      const px = cx + dx
+      const py = cy + dy
+      if (px < 0 || px >= width || py < 0 || py >= height) continue
+      const idx = (py * width + px) * 4
+      const t       = Math.sqrt(dist2) / r
+      const falloff = Math.exp(-t * t * 3.5)
+      const inkAdd  = Math.round(strength * falloff * 255)
+      data[idx]     = Math.min(255, data[idx]     + inkAdd)
+      data[idx + 1] = Math.min(255, data[idx + 1] + inkAdd)
+      data[idx + 2] = Math.min(255, data[idx + 2] + inkAdd)
+      data[idx + 3] = 255
+      written++
+    }
+  }
+
+  return written
+}
+
 export default function HeroCanvas({ className }) {
   const canvasRef    = useRef(null)
   const rafRef       = useRef(0)
@@ -112,46 +207,18 @@ export default function HeroCanvas({ className }) {
   const progRef      = useRef(null)
   const isHoveringRef  = useRef(false)
   const needsUploadRef = useRef(false)
+  const lastActivityRef  = useRef(-Infinity)
+  const touchOnlyRef     = useRef(false)
+  const reducedMotionRef = useRef(false)
+  const autoPhaseRef     = useRef(0)
+  const lastMaskRefreshRef = useRef(0)
+  const pointerDirtyRef    = useRef(false)
+  const lastFrameRef     = useRef(0)
 
-  const stamp = useCallback((normX, normY, radius = 55, strength = 0.85) => {
-    const data = dispDataRef.current
-    const cx   = Math.round(normX  * DISP_W)
-    const cy   = Math.round(normY  * DISP_H)
-    const r2   = radius * radius
-
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        const dist2 = dx * dx + dy * dy
-        if (dist2 > r2) continue
-        const px = cx + dx
-        const py = cy + dy
-        if (px < 0 || px >= DISP_W || py < 0 || py >= DISP_H) continue
-        const idx = (py * DISP_W + px) * 4
-        const t       = Math.sqrt(dist2) / radius
-        const falloff = Math.exp(-t * t * 3.5)
-        const inkAdd  = Math.round(strength * falloff * 255)
-        data[idx]     = Math.min(255, data[idx]     + inkAdd)
-        data[idx + 1] = Math.min(255, data[idx + 1] + inkAdd)
-        data[idx + 2] = Math.min(255, data[idx + 2] + inkAdd)
-        data[idx + 3] = 255
-      }
-    }
+  const stamp = useCallback((normX, normY, radius = REVEAL_RADIUS, strength = 0.85) => {
+    fillStamp(dispDataRef.current, normX, normY, radius, strength)
     needsUploadRef.current = true
   }, [])
-
-  const paint = useCallback((normX, normY, radius = 55, strength = 0.85) => {
-    stamp(normX, normY, radius, strength)
-    const count = 2 + Math.floor(Math.random() * 3)
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2
-      const dist = Math.random() * radius * 0.5
-      const sx = normX + (dist / DISP_W) * Math.cos(angle)
-      const sy = normY + (dist / DISP_H) * Math.sin(angle)
-      const sr = radius * (0.3 + Math.random() * 0.3)
-      const ss = strength * (0.3 + Math.random() * 0.4)
-      stamp(sx, sy, sr, ss)
-    }
-  }, [stamp])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -246,12 +313,29 @@ export default function HeroCanvas({ className }) {
 
     const startTime = performance.now()
 
+    const coarseQuery   = typeof window.matchMedia === 'function' ? window.matchMedia('(pointer: coarse)') : null
+    const reducedQuery  = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
+
+    const syncDevice = () => {
+      touchOnlyRef.current = isTouchOnlyDevice({
+        coarsePointer: coarseQuery ? coarseQuery.matches : false,
+        viewportWidth: window.innerWidth,
+      })
+      reducedMotionRef.current = reducedQuery ? reducedQuery.matches : false
+    }
+    syncDevice()
+    window.addEventListener('resize', syncDevice)
+    coarseQuery?.addEventListener?.('change', syncDevice)
+    reducedQuery?.addEventListener?.('change', syncDevice)
+
     function startRender() {
       const uTime = gl.getUniformLocation(prog, 'u_time')
 
       function decayBuffer() {
         const data = dispDataRef.current
-        const decayAmount = 6
+        // 6 units per display frame at ~60 FPS == ~360 units/s; scaled to the
+        // mask cadence so the trail lifetime stays the same.
+        const decayAmount = Math.round(360 * (MASK_UPDATE_INTERVAL_MS / 1000))
         const len = data.length
         let changed = false
         for (let i = 0; i < len; i += 4) {
@@ -268,18 +352,47 @@ export default function HeroCanvas({ className }) {
       function frame() {
         if (!gl || !prog) return
 
-        decayBuffer()
+        const now = performance.now()
+        const dt = lastFrameRef.current ? Math.min((now - lastFrameRef.current) / 1000, 0.1) : 0
+        lastFrameRef.current = now
 
-        if (needsUploadRef.current) {
-          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
-          gl.activeTexture(gl.TEXTURE2)
-          gl.bindTexture(gl.TEXTURE_2D, dispTexRef.current)
-          gl.texSubImage2D(
-            gl.TEXTURE_2D, 0, 0, 0, DISP_W, DISP_H,
-            gl.RGBA, gl.UNSIGNED_BYTE, dispDataRef.current
-          )
-          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
-          needsUploadRef.current = false
+        const autoReveal = shouldAutoReveal({
+          touchOnly: touchOnlyRef.current,
+          reducedMotion: reducedMotionRef.current,
+          now,
+          lastActivityAt: lastActivityRef.current,
+        })
+
+        // The phase advances every display frame so motion stays smooth, but
+        // the buffer work only runs on the mask cadence below.
+        if (autoReveal) autoPhaseRef.current += dt * AUTO_SPEED
+
+        const refreshMask = pointerDirtyRef.current
+          || shouldRefreshMask({ now, lastRefreshAt: lastMaskRefreshRef.current })
+
+        if (refreshMask) {
+          pointerDirtyRef.current = false
+          lastMaskRefreshRef.current = now
+
+          if (autoReveal) {
+            for (const point of autoStampPoints(autoPhaseRef.current)) {
+              stamp(point.x, point.y, point.radius, point.strength)
+            }
+          }
+
+          decayBuffer()
+
+          if (needsUploadRef.current) {
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true)
+            gl.activeTexture(gl.TEXTURE2)
+            gl.bindTexture(gl.TEXTURE_2D, dispTexRef.current)
+            gl.texSubImage2D(
+              gl.TEXTURE_2D, 0, 0, 0, DISP_W, DISP_H,
+              gl.RGBA, gl.UNSIGNED_BYTE, dispDataRef.current
+            )
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
+            needsUploadRef.current = false
+          }
         }
 
         const t = (performance.now() - startTime) / 1000
@@ -293,13 +406,19 @@ export default function HeroCanvas({ className }) {
     return () => {
       cancelAnimationFrame(rafRef.current)
       ro.disconnect()
+      window.removeEventListener('resize', syncDevice)
+      coarseQuery?.removeEventListener?.('change', syncDevice)
+      reducedQuery?.removeEventListener?.('change', syncDevice)
     }
-  }, [])
+  }, [stamp])
 
   const handleMove = useCallback(
     (e) => {
       const canvas = canvasRef.current
       if (!canvas) return
+      // Touch/tablet devices are driven by the idle path only.
+      if (touchOnlyRef.current) return
+      lastActivityRef.current = performance.now()
       const rect = canvas.getBoundingClientRect()
       let clientX, clientY
       if ('touches' in e) {
@@ -311,9 +430,11 @@ export default function HeroCanvas({ className }) {
       }
       const x = (clientX - rect.left) / rect.width
       const y = (clientY - rect.top)  / rect.height
-      stamp(x, y, 55, 0.85)
+      stamp(x, y, REVEAL_RADIUS, 0.85)
+      // Keep pointer feedback on the very next display frame.
+      pointerDirtyRef.current = true
     },
-    [paint]
+    [stamp]
   )
 
   return (
