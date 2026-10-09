@@ -1,148 +1,333 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
+export const FINAL_SEASON_TARGET = '2026-11-09T00:00:00-07:00';
+// Confirmed duration of public/ampudiazom.mp4 (9.566s). Used only as a
+// playback-started fallback; the media itself owns the real close.
+export const INTRO_DURATION_MS = 9566;
+// Startup grace before failing open when autoplay is blocked and no media event arrives.
+export const MEDIA_START_TIMEOUT_MS = 5000;
+// Versioned key for the current loader. The retired intro used the older
+// `logo-intro-played` key, so users who already saw it still get this one once per session.
+export const FINAL_SEASON_SESSION_KEY = 'final-season-intro-v1-played';
+
+const COUNTDOWN_UNITS = [
+  { key: 'days', label: 'D' },
+  { key: 'hours', label: 'H' },
+  { key: 'minutes', label: 'M' },
+  { key: 'seconds', label: 'S' },
+];
+
+export function getTimeLeft(targetDate, now = Date.now()) {
+  const diff = new Date(targetDate).getTime() - now;
+  if (!(diff > 0)) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+  return {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+  };
+}
+
+// Read synchronously so a reload with the flag already set renders null on the
+// very first pass instead of flashing the loader for one frame.
+function hasIntroPlayed() {
+  try {
+    return sessionStorage.getItem(FINAL_SEASON_SESSION_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+const pad = (value) => String(value).padStart(2, '0');
 
 export default function LogoIntro() {
-  const [phase, setPhase] = useState('enter'); // 'enter' | 'done'
+  const [dismissed, setDismissed] = useState(hasIntroPlayed);
+  const [playing, setPlaying] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(FINAL_SEASON_TARGET));
 
-  useEffect(() => {
-    const hasPlayed = sessionStorage.getItem('logo-intro-played');
-    if (hasPlayed) {
-      setPhase('done');
-      return;
-    }
-    const timer = setTimeout(() => {
-      setPhase('done');
-      sessionStorage.setItem('logo-intro-played', 'true');
-    }, 4200);
-    return () => clearTimeout(timer);
+  // Single close path for every dismissal route: reset the document to the top
+  // first so the visitor always lands on the initial Home hero, then unmount.
+  const dismiss = useCallback(() => {
+    window.scrollTo(0, 0);
+    setDismissed(true);
   }, []);
 
-  if (phase === 'done') return null;
+  // Claim the session the moment the loader mounts. An F5 mid-playback then
+  // finds the flag already written and never replays the intro.
+  useEffect(() => {
+    if (hasIntroPlayed()) return undefined;
+    try {
+      sessionStorage.setItem(FINAL_SEASON_SESSION_KEY, 'true');
+    } catch {
+      // Private mode without storage: the loader still runs once, unremembered.
+    }
+    return undefined;
+  }, []);
+
+  // Fail open if autoplay is blocked and no media event ever arrives.
+  useEffect(() => {
+    if (dismissed || playing) return undefined;
+    const timer = setTimeout(dismiss, MEDIA_START_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [dismissed, playing, dismiss]);
+
+  // Fallback close, armed only after playback actually starts.
+  useEffect(() => {
+    if (dismissed || !playing) return undefined;
+    const timer = setTimeout(dismiss, INTRO_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [dismissed, playing, dismiss]);
+
+  // Safety net: a scroll or Escape that lands outside the overlay still skips
+  // the intro instead of trapping the visitor on the black screen. The wheel
+  // and touchmove listeners are non-passive on purpose: while the loader is
+  // mounted they own the gesture, so the same scroll never leaks to the page
+  // behind and the visitor lands on the Home hero. Cleanup removes them, which
+  // is what keeps the site scrollable once the loader is gone.
+  useEffect(() => {
+    if (dismissed) return undefined;
+    const skip = (event) => {
+      event.preventDefault();
+      dismiss();
+    };
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') dismiss();
+    };
+    window.addEventListener('wheel', skip, { passive: false });
+    window.addEventListener('touchmove', skip, { passive: false });
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('wheel', skip);
+      window.removeEventListener('touchmove', skip);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [dismissed, dismiss]);
+
+  useEffect(() => {
+    if (dismissed) return undefined;
+    const tick = () => setTimeLeft(getTimeLeft(FINAL_SEASON_TARGET));
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [dismissed]);
+
+  if (dismissed) return null;
+
+  const play = () => setPlaying(true);
 
   return (
     <>
       <style>{`
-        @keyframes introFadeOut {
-          0%, 83% { opacity: 1; }
-          100% { opacity: 0; }
+        @keyframes announceRise {
+          0%   { opacity: 0; transform: translateY(20px) scale(0.97); }
+          25%  { opacity: 1; transform: translateY(0) scale(1); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes hlLeft {
-          0%   { left: 45%;  width: 8px;   height: 8px;   opacity: 0; filter: blur(2px); }
-          6%   { opacity: 0.7; filter: blur(3px); }
-          15%  { opacity: 1;   filter: blur(4px); }
-          35%  { left: 30%;  width: 80px;  height: 80px;  filter: blur(12px); }
-          55%  { left: 18%;  width: 220px; height: 220px; filter: blur(28px); }
-          72%  { left: 8%;   width: 400px; height: 400px; filter: blur(45px); opacity: 0.85; }
-          82%  { left: 3%;   width: 550px; height: 550px; filter: blur(55px); opacity: 0.7; }
-          92%  { left: 0%;   width: 700px; height: 700px; filter: blur(70px); opacity: 0.3; }
-          100% { left: -5%;  width: 900px; height: 900px; filter: blur(90px); opacity: 0; }
+        @keyframes countdownRise {
+          0%, 25% { opacity: 0; transform: translateY(14px); }
+          60%     { opacity: 1; transform: translateY(0); }
+          100%    { opacity: 1; transform: translateY(0); }
         }
-        @keyframes hlRight {
-          0%   { left: 55%;  width: 8px;   height: 8px;   opacity: 0; filter: blur(2px); }
-          6%   { opacity: 0.7; filter: blur(3px); }
-          15%  { opacity: 1;   filter: blur(4px); }
-          35%  { left: 70%;  width: 80px;  height: 80px;  filter: blur(12px); }
-          55%  { left: 82%;  width: 220px; height: 220px; filter: blur(28px); }
-          72%  { left: 92%;  width: 400px; height: 400px; filter: blur(45px); opacity: 0.85; }
-          82%  { left: 97%;  width: 550px; height: 550px; filter: blur(55px); opacity: 0.7; }
-          92%  { left: 100%; width: 700px; height: 700px; filter: blur(70px); opacity: 0.3; }
-          100% { left: 105%; width: 900px; height: 900px; filter: blur(90px); opacity: 0; }
+        /* Viewport-scaled type so the composition fills the screen instead of
+           reading as a small centered block. */
+        .intro-headline {
+          font-size: var(--intro-headline-size);
         }
-        @keyframes logoReveal {
-          0%, 35%  { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
-          50%  { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
-          65%  { opacity: 1; transform: translate(-50%, -50%) scale(1.02); }
-          78%  { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
-          100% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+        .intro-countdown-digits {
+          font-size: var(--intro-countdown-size);
         }
-        @keyframes flashBurst {
-          0%, 78%   { opacity: 0; }
-          81%  { opacity: 0.95; }
-          87%   { opacity: 0; }
-          100%  { opacity: 0; }
+        /* Countdown drops toward the bottom edge, away from the lifted headline. */
+        .intro-countdown {
+          bottom: var(--intro-countdown-bottom);
         }
-        @keyframes lightCone {
-          0%, 20%  { opacity: 0; }
-          40% { opacity: 0.06; }
-          65% { opacity: 0.12; }
-          82% { opacity: 0.18; }
-          92% { opacity: 0; }
-          100% { opacity: 0; }
+        /* Narrow viewports: the width-relative size alone leaves the headline
+           short, so scale it up and compress horizontally instead, keeping
+           'FINAL SEASON' inside the viewport. */
+        @media (max-width: 600px) {
+          .intro-headline {
+            font-size: var(--intro-headline-mobile-size);
+            transform: scaleX(var(--intro-headline-mobile-scale));
+          }
+          .intro-countdown-digits {
+            font-size: var(--intro-countdown-mobile-size);
+          }
         }
       `}</style>
 
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10000,
-        background: '#000000',
-        animation: 'introFadeOut 4.2s ease-out forwards',
-      }}>
-        {/* Ambient light cones */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, bottom: 0, width: '45%',
-          background: 'linear-gradient(to right, rgba(255,255,255,0.12) 0%, transparent 100%)',
-          opacity: 0,
-          animation: 'lightCone 4.2s ease-out forwards',
-        }} />
-        <div style={{
-          position: 'absolute', top: 0, right: 0, bottom: 0, width: '45%',
-          background: 'linear-gradient(to left, rgba(255,255,255,0.12) 0%, transparent 100%)',
-          opacity: 0,
-          animation: 'lightCone 4.2s ease-out forwards',
-        }} />
+      <div
+        data-testid="logo-intro"
+        data-phase={playing ? 'playing' : 'idle'}
+        onClick={dismiss}
+        onPointerDown={dismiss}
+        onTouchStart={dismiss}
+        onTouchMove={dismiss}
+        onWheel={dismiss}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 10000,
+          background: '#000000',
+          isolation: 'isolate',
+          overflow: 'hidden',
+          // Spacing contract for the two groups: lift the headline block up and
+          // drop the countdown toward the bottom edge so they read as separate.
+          '--intro-headline-lift': 'clamp(2rem, 7vh, 5.5rem)',
+          '--intro-countdown-bottom': 'clamp(2.5rem, 14vh, 8rem)',
+        }}
+      >
+        {/* Revealed only once the media is genuinely playing, so nothing can
+            leak a hero frame before the first decoded video frame. */}
+        <video
+          data-testid="final-season-video"
+          data-visible={playing}
+          src="/ampudiazom.mp4"
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          onPlaying={play}
+          onEnded={dismiss}
+          onError={dismiss}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 1,
+            pointerEvents: 'none',
+            opacity: playing ? 1 : 0,
+            visibility: playing ? 'visible' : 'hidden',
+            transition: 'opacity 600ms ease-out',
+          }}
+        />
 
-        {/* Left headlight - starts small center, grows and spreads left with blur */}
-        <div style={{
-          position: 'absolute', top: '50%',
-          left: '45%', width: '8px', height: '8px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.2) 55%, transparent 75%)',
-          boxShadow: '0 0 30px 8px rgba(255,255,255,0.5), 0 0 60px 16px rgba(255,255,255,0.3), 0 0 120px 40px rgba(255,255,255,0.1)',
-          transform: 'translate(-50%, -50%)',
-          animation: 'hlLeft 4.2s ease-in-out forwards',
-        }} />
-
-        {/* Right headlight - starts small center, grows and spreads right with blur */}
-        <div style={{
-          position: 'absolute', top: '50%',
-          left: '55%', width: '8px', height: '8px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, #ffffff 0%, rgba(255,255,255,0.85) 20%, rgba(255,255,255,0.2) 55%, transparent 75%)',
-          boxShadow: '0 0 30px 8px rgba(255,255,255,0.5), 0 0 60px 16px rgba(255,255,255,0.3), 0 0 120px 40px rgba(255,255,255,0.1)',
-          transform: 'translate(-50%, -50%)',
-          animation: 'hlRight 4.2s ease-in-out forwards',
-        }} />
-
-        {/* Flash */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'radial-gradient(circle at center, #ffffff 0%, rgba(233,30,99,0.45) 45%, transparent 100%)',
-          opacity: 0,
-          animation: 'flashBurst 4.2s ease-out forwards',
-          pointerEvents: 'none',
-        }} />
-
-        {/* Logo */}
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%) scale(0.85)',
-          opacity: 0,
-          animation: 'logoReveal 4.2s ease-out forwards',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.2rem',
-        }}>
-          <img
-            src="/logo2calavera.svg"
-            alt="Alan Ampudia"
+        {/* Opaque black plate with white copy; `darken` keeps the video only
+            where the glyphs are, hiding it everywhere else. */}
+        <div
+          data-testid="final-season-announcement"
+          data-visible={playing}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            minHeight: '100%',
+            zIndex: 2,
+            background: '#000000',
+            mixBlendMode: 'darken',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: '0 3vw',
+            boxSizing: 'border-box',
+            opacity: playing ? 1 : 0,
+            pointerEvents: 'none',
+            animation: playing ? 'announceRise 1.2s ease-out both' : 'none',
+          }}
+        >
+          <div
+            data-testid="final-season-headline"
             style={{
-              width: '170px', height: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              transform: 'translateY(calc(-1 * var(--intro-headline-lift)))',
             }}
-          />
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontFamily: 'Anton, sans-serif', fontSize: '2.4rem', letterSpacing: '0.08em', color: '#ffffff' }}>AMPUDIA</span>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.82rem', letterSpacing: '0.32em', color: 'rgba(233,30,99,1)', marginTop: '6px' }}>OFFROAD #1</span>
+          >
+            <h1 className="intro-headline" style={lineStyle}>
+              LAST RACE
+            </h1>
+            <h1 className="intro-headline" style={lineStyle}>
+              FINAL SEASON
+            </h1>
           </div>
+        </div>
+
+        {/* Live countdown to the confirmed race date, spread across the viewport width */}
+        <div
+          data-testid="final-season-countdown"
+          data-visible={playing}
+          className="intro-countdown"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            width: '100%',
+            boxSizing: 'border-box',
+            zIndex: 3,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            gap: 'clamp(0.5rem, 3vw, 2.5rem)',
+            padding: '0 clamp(1.25rem, 6vw, 5rem)',
+            opacity: playing ? 1 : 0,
+            pointerEvents: 'none',
+            animation: playing ? 'countdownRise 1.2s ease-out both' : 'none',
+          }}
+        >
+          {COUNTDOWN_UNITS.map(({ key, label }) => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span
+                className="intro-countdown-digits"
+                data-testid={`countdown-${key}`}
+                style={{
+                  fontFamily: "'Anton', 'Barlow Condensed', sans-serif",
+                  fontWeight: 900,
+                  '--intro-countdown-size': 'clamp(2.4rem, 10vw, 7rem)',
+                  '--intro-countdown-mobile-size': 'clamp(2.6rem, 13.5vw, 5rem)',
+                  lineHeight: 1,
+                  color: '#ffffff',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {pad(timeLeft[key])}
+              </span>
+              <span
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 'clamp(0.7rem, 2vw, 1.1rem)',
+                  letterSpacing: '0.3em',
+                  color: 'rgba(233,30,99,1)',
+                  marginTop: '0.35rem',
+                }}
+              >
+                {label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </>
   );
 }
+
+const lineStyle = {
+  fontFamily: "'Anton', 'Barlow Condensed', sans-serif",
+  fontWeight: 900,
+  // Leading coefficient: the headline reads across roughly 5.4em, so 16vw keeps
+  // the longest line inside the viewport at every width.
+  '--intro-headline-size': 'clamp(3.2rem, 16vw, 18rem)',
+  // Narrow viewports: taller type, compressed horizontally to keep the longest
+  // line inside the viewport (see the max-width: 600px rule).
+  '--intro-headline-mobile-size': 'clamp(4rem, 25vw, 8.5rem)',
+  '--intro-headline-mobile-scale': '0.55',
+  lineHeight: 0.9,
+  letterSpacing: '-0.02em',
+  textTransform: 'uppercase',
+  whiteSpace: 'nowrap',
+  color: '#ffffff',
+  margin: 0,
+};
