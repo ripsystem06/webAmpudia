@@ -19,6 +19,18 @@ export default defineConfig({
     outDir: 'build',
   },
   optimizeDeps: {
+    // Pre-bundle these at startup so the first load from any device never
+    // triggers a mid-request re-optimization + reload. Babel uses the
+    // automatic JSX runtime (`react/jsx-runtime`), which the esbuild dep
+    // scanner does not detect on its own.
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react-router-dom',
+      'gsap',
+    ],
     esbuildOptions: {
       loader: {
         '.js': 'jsx',
