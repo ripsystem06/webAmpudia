@@ -37,6 +37,9 @@ yarn-error.log*
 .claude/
 .codegraph/
 
+# Playwright MCP test artifacts
+.playwright-mcp/
+
 # Docs
 DESIGN.md
 
