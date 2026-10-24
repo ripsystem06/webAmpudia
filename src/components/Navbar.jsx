@@ -11,7 +11,7 @@ const navKeys = [
 ];
 
 export default function Navbar() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [inHero, setInHero] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -43,6 +43,12 @@ export default function Navbar() {
   const textColor = inHero ? '#111' : 'var(--magenta)'
   const hoverColor = inHero ? 'var(--magenta-bright)' : 'var(--white)'
   const barBg = menuOpen ? '#111' : textColor
+
+  // Store link by language: EN (shop) -> alanampudia.store, ES (tienda) ->
+  // alanampudia.tienda. The MX store is not live yet, so the language branch
+  // stays commented out; uncomment it once the MX store is enabled.
+  // const storeUrl = lang === 'es' ? 'https://alanampudia.tienda' : 'https://alanampudia.store';
+  const storeUrl = 'https://alanampudia.store';
 
   return (
     <>
@@ -110,7 +116,7 @@ export default function Navbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.84rem' }}>
           <LanguageToggle />
           <a
-            href="https://alanampudia.store"
+            href={storeUrl}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -230,7 +236,7 @@ export default function Navbar() {
           })}
 
           <a
-            href="https://alanampudia.store"
+            href={storeUrl}
             target="_blank"
             rel="noopener noreferrer"
             style={{
