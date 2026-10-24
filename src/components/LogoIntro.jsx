@@ -144,7 +144,7 @@ export default function LogoIntro() {
         }
         /* Narrow viewports: the width-relative size alone leaves the headline
            short, so scale it up and compress horizontally instead, keeping
-           'FINAL SEASON' inside the viewport. */
+           'SEASON FINALE' inside the viewport. */
         @media (max-width: 600px) {
           .intro-headline {
             font-size: var(--intro-headline-mobile-size);
@@ -248,10 +248,10 @@ export default function LogoIntro() {
             }}
           >
             <h1 className="intro-headline" style={lineStyle}>
-              LAST RACE
+              FINAL RACE
             </h1>
             <h1 className="intro-headline" style={lineStyle}>
-              FINAL SEASON
+              SEASON FINALE
             </h1>
           </div>
         </div>
@@ -317,13 +317,13 @@ export default function LogoIntro() {
 const lineStyle = {
   fontFamily: "'Anton', 'Barlow Condensed', sans-serif",
   fontWeight: 900,
-  // Leading coefficient: the headline reads across roughly 5.4em, so 16vw keeps
-  // the longest line inside the viewport at every width.
+  // Leading coefficient: the longest headline line is 'SEASON FINALE', and 16vw
+  // is the desktop scale that keeps the two-line block dominant on wide screens.
   '--intro-headline-size': 'clamp(3.2rem, 16vw, 18rem)',
-  // Narrow viewports: taller type, compressed horizontally to keep the longest
-  // line inside the viewport (see the max-width: 600px rule).
+  // Narrow viewports: taller type, compressed horizontally so the longer
+  // 'SEASON FINALE' line still fits inside 390px (see the max-width: 600px rule).
   '--intro-headline-mobile-size': 'clamp(4rem, 25vw, 8.5rem)',
-  '--intro-headline-mobile-scale': '0.55',
+  '--intro-headline-mobile-scale': '0.52',
   lineHeight: 0.9,
   letterSpacing: '-0.02em',
   textTransform: 'uppercase',

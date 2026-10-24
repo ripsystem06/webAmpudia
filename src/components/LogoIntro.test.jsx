@@ -31,9 +31,9 @@ const introCss = () =>
 
 const MOBILE_MEDIA_QUERY = '@media (max-width: 600px)';
 const MOBILE_VIEWPORT_PX = 390;
-// Conservative width model for 'FINAL SEASON' in the condensed Anton face:
-// 11 letters at a generous 0.6em advance plus one space at 0.3em.
-const FINAL_SEASON_WIDTH_EM = 11 * 0.6 + 0.3;
+// Conservative width model for 'SEASON FINALE' in the condensed Anton face:
+// 12 letters at a generous 0.6em advance plus one space at 0.3em.
+const FINAL_SEASON_WIDTH_EM = 12 * 0.6 + 0.3;
 const COUNTDOWN_UNITS_TOTAL = 4;
 const COUNTDOWN_SIDE_PADDING_VW = 6; // '0 clamp(1.25rem, 6vw, 5rem)': two sides
 const COUNTDOWN_MIN_GAP_VW = 3; // 'clamp(0.5rem, 3vw, 2.5rem)': three gaps
@@ -164,8 +164,8 @@ describe('LogoIntro video lifecycle', () => {
     expect(video).toHaveAttribute('data-visible', 'true');
     expect(screen.getByTestId('final-season-announcement')).toHaveAttribute('data-visible', 'true');
     expect(screen.getByTestId('final-season-countdown')).toHaveAttribute('data-visible', 'true');
-    expect(screen.getByText('LAST RACE')).toBeInTheDocument();
-    expect(screen.getByText('FINAL SEASON')).toBeInTheDocument();
+    expect(screen.getByText('FINAL RACE')).toBeInTheDocument();
+    expect(screen.getByText('SEASON FINALE')).toBeInTheDocument();
   });
 
   test('fails open at 5000ms when media never starts', () => {
@@ -289,7 +289,7 @@ describe('LogoIntro session behaviour', () => {
     const { container } = render(<LogoIntro />);
 
     expect(container.firstChild).not.toBeNull();
-    expect(screen.getByText('FINAL SEASON')).toBeInTheDocument();
+    expect(screen.getByText('SEASON FINALE')).toBeInTheDocument();
   });
 
   test('never writes the retired intro key', () => {
@@ -516,7 +516,7 @@ describe('LogoIntro full-viewport layout contract', () => {
   test('scales the two headline lines aggressively with the viewport', () => {
     render(<LogoIntro />);
 
-    [screen.getByText('LAST RACE'), screen.getByText('FINAL SEASON')].forEach((line) => {
+    [screen.getByText('FINAL RACE'), screen.getByText('SEASON FINALE')].forEach((line) => {
       expect(line).toHaveClass('intro-headline');
       const size = line.style.getPropertyValue('--intro-headline-size');
       expect(vwOf(size)).toBeGreaterThanOrEqual(14);
@@ -570,8 +570,8 @@ describe('LogoIntro full-viewport layout contract', () => {
     const headlineBlock = screen.getByTestId('final-season-headline');
     expect(headlineBlock.style.transform).toMatch(/translateY\(/);
     expect(headlineBlock.style.transform).toMatch(/var\(--intro-headline-lift\)/);
-    expect(headlineBlock).toContainElement(screen.getByText('LAST RACE'));
-    expect(headlineBlock).toContainElement(screen.getByText('FINAL SEASON'));
+    expect(headlineBlock).toContainElement(screen.getByText('FINAL RACE'));
+    expect(headlineBlock).toContainElement(screen.getByText('SEASON FINALE'));
 
     // The countdown consumes the lowered bottom offset through a real rule.
     expect(countdown).toHaveClass('intro-countdown');
@@ -595,7 +595,7 @@ describe('LogoIntro full-viewport layout contract', () => {
       expect(headlineRule).toMatch(/font-size:\s*var\(--intro-headline-mobile-size\)/);
       expect(headlineRule).toMatch(/transform:\s*scaleX\(var\(--intro-headline-mobile-scale\)\)/);
 
-      const line = screen.getByText('FINAL SEASON');
+      const line = screen.getByText('SEASON FINALE');
       const size = line.style.getPropertyValue('--intro-headline-mobile-size');
       expect(vwOf(size)).toBeGreaterThanOrEqual(24);
       expect(vwOf(size)).toBeLessThanOrEqual(26);
@@ -604,7 +604,7 @@ describe('LogoIntro full-viewport layout contract', () => {
       expect(scale).toBeGreaterThan(0);
       expect(scale).toBeLessThan(1);
 
-      // The horizontal compression must keep FINAL SEASON inside 390px.
+      // The horizontal compression must keep SEASON FINALE inside 390px.
       const estimatedWidthPx =
         (FINAL_SEASON_WIDTH_EM * vwOf(size) * scale * MOBILE_VIEWPORT_PX) / 100;
       expect(estimatedWidthPx).toBeLessThanOrEqual(MOBILE_VIEWPORT_PX);
