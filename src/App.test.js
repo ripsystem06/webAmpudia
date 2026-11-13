@@ -12,5 +12,6 @@ beforeAll(() => {
 test('renders the site navigation', () => {
   render(<App />);
   expect(screen.getByText('ALAN')).toBeTruthy();
-  expect(screen.getByText('AMPUDIA')).toBeTruthy();
+  // 'AMPUDIA' appears both in the navbar brand and the intro logo overlay.
+  expect(screen.getAllByText('AMPUDIA').length).toBeGreaterThan(0);
 });
