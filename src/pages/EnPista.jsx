@@ -100,67 +100,6 @@ const estadoColor = {
   'DNF': '#ff4444',
 };
 
-function CountdownTimer({ targetDate }) {
-  const { t } = useLanguage();
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const difference = new Date(targetDate) - new Date();
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      }
-    };
-
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(timer);
-  }, [targetDate]);
-
-  const pad = (n) => String(n).padStart(2, '0');
-
-  return (
-    <div style={{ display: 'flex', gap: 'clamp(0.4rem, 1.5vw, 1.5rem)', marginTop: '2rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-      {[
-        { value: timeLeft.days, label: t('common.dias_short') },
-        { value: timeLeft.hours, label: t('common.horas_short') },
-        { value: timeLeft.minutes, label: t('common.min_short') },
-        { value: timeLeft.seconds, label: t('common.seg_short') },
-      ].map((item, i) => (
-        <div key={item.label} style={{ textAlign: 'center' }}>
-          <div style={{
-            fontFamily: 'Anton, sans-serif',
-            fontSize: 'clamp(2rem, 5vw, 4rem)',
-            color: 'var(--magenta)',
-            lineHeight: 1,
-            background: 'rgba(233,30,99,0.1)',
-            border: '1px solid rgba(233,30,99,0.3)',
-            padding: 'clamp(0.25rem, 1vw, 0.5rem) clamp(0.4rem, 1.5vw, 1rem)',
-            minWidth: 'clamp(55px, 12vw, 80px)',
-          }}>
-            {pad(item.value)}
-          </div>
-          <div style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '0.65rem',
-            letterSpacing: '0.15em',
-            color: 'var(--white-dim)',
-            marginTop: '0.5rem',
-            textTransform: 'uppercase',
-          }}>
-            {item.label}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function CountdownInline({ targetDate }) {
   const { t } = useLanguage();
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -514,472 +453,134 @@ function TeamSection() {
   );
 }
 
-const COURSE_SVG_URL = '/pistabaja1000.svg';
-const COURSE_SVG_FALLBACK_VIEWBOX = '0 0 1080 1080';
-// Loads the authored course path from the same-origin public SVG and paints a
-// stroke-only tracer that travels the complete compound path in a seamless loop.
-function CourseTrace({ stageRef }) {
-  const [course, setCourse] = useState(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const routePathRef = useRef(null);
-  const trailGlowRef = useRef(null);
-  const trailCoreRef = useRef(null);
-  const markerRef = useRef(null);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
-
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onChange = () => setReduceMotion(media.matches);
-    onChange();
-    media.addEventListener?.('change', onChange);
-    return () => media.removeEventListener?.('change', onChange);
-  }, []);
-
-  // Keep the current magenta mask as the fallback: render nothing until the
-  // authored path parses, and stay silent on any fetch or parse failure.
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      try {
-        const response = await fetch(COURSE_SVG_URL, { credentials: 'same-origin' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const markup = await response.text();
-        const doc = new DOMParser().parseFromString(markup, 'image/svg+xml');
-        if (doc.querySelector('parsererror')) throw new Error('invalid svg');
-        const pathEl = doc.querySelector('path[d]');
-        const d = pathEl?.getAttribute('d');
-        if (!d) throw new Error('course path missing');
-        // The authored path contains two closed edges of the same course ribbon.
-        // Follow one complete closed edge; tracing both sequentially looks like a return trip.
-        const circuit = d.match(/[Mm][^Mm]*/)?.[0]?.trim();
-        if (!circuit || !/[Zz]$/.test(circuit)) throw new Error('closed course contour missing');
-        if (!cancelled) {
-          setCourse({
-            d: circuit,
-            viewBox: doc.querySelector('svg')?.getAttribute('viewBox') || COURSE_SVG_FALLBACK_VIEWBOX,
-          });
-        }
-      } catch {
-        if (!cancelled) setCourse(null);
-      }
-    };
-
-    load();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Travel one closed contour in the requested reverse direction. The glowing
-  // paths sample only the section behind the circular marker, so there is no
-  // dash sweep and no mid-course reversal.
-  useEffect(() => {
-    const routePath = routePathRef.current;
-    const stage = stageRef.current;
-    const trailGlow = trailGlowRef.current;
-    const trailCore = trailCoreRef.current;
-    const marker = markerRef.current;
-    if (!routePath || !stage || !trailGlow || !trailCore || !marker) return undefined;
-
-    let total = 0;
-    try { total = routePath.getTotalLength(); } catch { total = 0; }
-    if (!total) return undefined;
-
-    if (reduceMotion) {
-      stage.style.transform = 'rotateX(45deg) rotateZ(0deg) translateZ(22px)';
-      const staticPoint = routePath.getPointAtLength(total * 0.9);
-      marker.setAttribute('transform', `translate(${staticPoint.x} ${staticPoint.y}) rotate(0)`);
-      marker.setAttribute('visibility', 'visible');
-      trailGlow.setAttribute('d', '');
-      trailCore.setAttribute('d', '');
-      return undefined;
-    }
-
-    const durationMs = 12000;
-    const tailLength = total * 0.025;
-    const sampleCount = 16;
-    let startTime;
-    let frameId;
-
-    const pointAt = (distance) => {
-      const wrappedDistance = ((distance % total) + total) % total;
-      return routePath.getPointAtLength(wrappedDistance);
-    };
-
-    const animate = (now) => {
-      if (startTime === undefined) startTime = now;
-      const elapsed = (now - startTime) % durationMs;
-      const progress = (elapsed / durationMs) * total;
-      const rotation = (elapsed / durationMs) * 360;
-      const distance = (total - progress) % total;
-      const head = pointAt(distance);
-      stage.style.transform = `rotateX(45deg) rotateZ(${rotation}deg) translateZ(22px)`;
-      marker.setAttribute('transform', `translate(${head.x} ${head.y}) rotate(${-rotation})`);
-      marker.setAttribute('visibility', 'visible');
-
-      const points = [];
-      for (let index = 0; index <= sampleCount; index += 1) {
-        const trailDistance = distance + tailLength - (tailLength * index) / sampleCount;
-        const point = pointAt(trailDistance);
-        points.push(`${index === 0 ? 'M' : 'L'}${point.x} ${point.y}`);
-      }
-      const trail = points.join(' ');
-      trailGlow.setAttribute('d', trail);
-      trailCore.setAttribute('d', trail);
-      frameId = window.requestAnimationFrame(animate);
-    };
-
-    frameId = window.requestAnimationFrame(animate);
-    return () => window.cancelAnimationFrame(frameId);
-  }, [course, reduceMotion, stageRef]);
-
-  if (!course) return null;
-
-  return (
-    <svg
-      viewBox={course.viewBox}
-      preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
-      focusable="false"
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        display: 'block',
-        pointerEvents: 'none',
-        overflow: 'visible',
-        transformStyle: 'preserve-3d',
-        zIndex: 3,
-      }}
-    >
-      <defs>
-        <filter id="enpista-trace-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="2" result="enpista-trace-blur" />
-          <feMerge>
-            <feMergeNode in="enpista-trace-blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <filter id="enpista-marker-glow" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur stdDeviation="6" result="enpista-marker-blur" />
-          <feMerge>
-            <feMergeNode in="enpista-marker-blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      {/* This invisible geometry preserves the authored compound course path for sampling. */}
-      <path
-        ref={routePathRef}
-        d={course.d}
-        fill="none"
-        stroke="none"
-      />
-      <path
-        ref={trailGlowRef}
-        fill="none"
-        stroke="#ff4fa3"
-        strokeWidth="9"
-        strokeOpacity="0.42"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#enpista-trace-glow)"
-      />
-      <path
-        ref={trailCoreRef}
-        fill="none"
-        stroke="#ffe3f1"
-        strokeWidth="3"
-        strokeOpacity="0.95"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <g ref={markerRef} visibility="hidden">
-        <circle r="20" fill="#ff4fa3" opacity="0.72" filter="url(#enpista-marker-glow)" />
-        <circle r="10" fill="#fff4fa" stroke="#ff4fa3" strokeWidth="3" />
-      </g>
-    </svg>
-  );
-}
-
 function HeroSection() {
   const { t } = useLanguage();
-  const heroRef = useRef();
-  const courseStageRef = useRef(null);
   const [heroVisible, setHeroVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
 
   useEffect(() => {
     setHeroVisible(true);
   }, []);
 
+  const lines = [t('enpista.see_you_next_line1'), t('enpista.see_you_next_line2')];
+  let charIndex = 0;
+
   return (
-    <div ref={heroRef} id="hero-section-trigger" style={{
+    <div id="hero-section-trigger" style={{
       position: 'relative',
       minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 'clamp(2rem, 5vw, 5rem)',
       background: 'linear-gradient(180deg, #0a0a0a 0%, rgba(20,2,20,1) 60%, rgba(233,30,99,0.12) 100%)',
       overflow: 'hidden',
     }}>
-      {/* Content */}
       <div style={{
-        position: 'relative',
-        zIndex: 10,
         display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems: isMobile ? 'center' : 'stretch',
+        flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '100vh',
-        paddingTop: '10vh',
-        paddingRight: isMobile ? '2rem' : 'clamp(2rem, 6vw, 6rem)',
-        paddingBottom: '4rem',
-        paddingLeft: isMobile ? '2rem' : 'clamp(2rem, 6vw, 6rem)',
-        textAlign: isMobile ? 'center' : 'left',
+        gap: 'clamp(2rem, 6vw, 5rem)',
+        flexWrap: 'wrap',
+        textAlign: 'left',
+        zIndex: 5,
       }}>
-        {/* Left column */}
-        <div style={{
-          flex: isMobile ? 'none' : '0 0 50%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: isMobile ? 'center' : 'flex-start',
-          justifyContent: 'center',
-        }}>
-        {/* Event Badge */}
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.5rem 1.2rem',
-          background: 'rgba(233,30,99,0.15)',
-          border: '1px solid rgba(233,30,99,0.4)',
-          marginBottom: '2rem',
-          animation: 'pulse 2s ease-in-out infinite',
-        }}>
-          <div style={{
-            width: '8px',
-            height: '8px',
-            background: 'var(--magenta)',
-            borderRadius: '50%',
-            animation: 'blink 1.5s ease-in-out infinite',
-          }} />
-          <span style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '0.75rem',
-            letterSpacing: '0.25em',
-            color: 'var(--magenta-bright)',
-            textTransform: 'uppercase',
-          }}>
-            {t('common.proxima_carrera')}
-          </span>
-        </div>
-
-        {/* Main Title */}
+        <img
+          src="/logo2calavera.svg"
+          alt="Alan Ampudia"
+          style={{
+            width: 'clamp(170px, 28vw, 320px)',
+            height: 'auto',
+            filter: 'drop-shadow(0 0 60px rgba(233,30,99,0.35))',
+            opacity: heroVisible ? 1 : 0,
+            transform: heroVisible ? 'translateX(0) scale(1)' : 'translateX(-40px) scale(0.92)',
+            transition: 'all 1s ease',
+          }}
+        />
         <h1 style={{
           fontFamily: 'Anton, sans-serif',
-          fontSize: 'clamp(3rem, 10vw, 8rem)',
-          lineHeight: 0.95,
+          fontSize: 'clamp(2.6rem, 8vw, 6.5rem)',
+          lineHeight: 1.04,
+          letterSpacing: '0.05em',
           color: 'var(--white)',
+          textTransform: 'uppercase',
           margin: 0,
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(30px)',
-          transition: 'all 0.8s ease 0.2s',
+          textShadow: '0 0 34px rgba(233,30,99,0.28)',
         }}>
-          59th<br />
-          <span style={{ color: 'var(--magenta)' }}>SCORE BAJA 1000</span>
+          {lines.map((line, li) => (
+            <span key={li} style={{ display: 'block' }}>
+              {line.split('').map((ch, ci) => {
+                const idx = charIndex;
+                charIndex += 1;
+                return (
+                  <span key={ci} style={{
+                    display: 'inline-block',
+                    opacity: heroVisible ? 1 : 0,
+                    transform: heroVisible ? 'translateY(0)' : 'translateY(34px)',
+                    filter: heroVisible ? 'blur(0px)' : 'blur(6px)',
+                    transition: `opacity 0.55s ease ${0.25 + idx * 0.035}s, transform 0.55s ease ${0.25 + idx * 0.035}s, filter 0.55s ease ${0.25 + idx * 0.035}s`,
+                  }}>
+                    {ch === ' ' ? '\u00A0' : ch}
+                  </span>
+                );
+              })}
+            </span>
+          ))}
         </h1>
+      </div>
 
-        {/* Event Details */}
-        <div style={{
-          marginTop: '2.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.8s ease 0.4s',
-        }}>
-          <div style={{
-            fontFamily: 'Barlow Condensed, sans-serif',
-            fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
-            color: 'var(--white-soft)',
-            letterSpacing: '0.05em',
-          }}>
-            1,000+ miles of Baja terrain
-          </div>
-          <div style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '0.85rem',
-            color: 'var(--white-dim)',
-            letterSpacing: '0.15em',
-          }}>
-            San José del Cabo, Baja Sur — Nov 9, 2026
-          </div>
+      {/* Scroll indicator */}
+      <div style={{
+        position: 'absolute',
+        bottom: '1.6rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.55rem',
+        opacity: heroVisible ? 1 : 0,
+        transition: 'opacity 0.8s ease 1.4s',
+        zIndex: 10,
+      }}>
+        <div className="hero-scroll-mouse">
+          <div className="hero-scroll-wheel" />
         </div>
-
-        {/* Countdown */}
-        <div style={{
-          marginTop: '3rem',
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.8s ease 0.6s',
-        }}>
-          <div style={{
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '0.7rem',
-            letterSpacing: '0.3em',
-            color: 'var(--magenta-bright)',
-            textTransform: 'uppercase',
-            marginBottom: '1rem',
-          }}>
-            {t('common.tiempo_salida')}
-          </div>
-          <CountdownTimer targetDate="2026-11-09T00:00:00-07:00" />
-        </div>
-        </div>{/* end left column */}
-
-        {/* BAJA 1000 hero logo block */}
-        <div style={{
-          flex: isMobile ? 'none' : '0 0 50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: isMobile ? '1rem 0 0' : '2rem 0 2rem 2rem',
-          width: isMobile ? '100%' : undefined,
-          maxWidth: isMobile ? '460px' : undefined,
-          margin: isMobile ? '0 auto' : undefined,
-          marginTop: isMobile ? '1.8rem' : 0,
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 0.8s ease 0.3s',
-        }}>
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            minHeight: isMobile ? 'min(72vw, 400px)' : 'min(68vh, 640px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: isMobile ? '0.5rem' : 'clamp(0.5rem, 1.5vw, 1.5rem)',
-          }}>
-            <div style={{
-              position: 'relative',
-              width: 'min(100%, 480px)',
-              aspectRatio: '1',
-              perspective: '900px',
-              transformStyle: 'preserve-3d',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-              <div style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                marginBottom: isMobile ? '0.6rem' : '1rem',
-                width: 'max-content',
-                maxWidth: '100%',
-                textAlign: 'center',
-                fontFamily: 'Anton, sans-serif',
-                fontSize: isMobile ? 'clamp(1.02rem, 3.84vw, 1.44rem)' : 'clamp(1.2rem, 1.92vw, 1.62rem)',
-                letterSpacing: '0.1em',
-                color: 'var(--magenta)',
-                textTransform: 'uppercase',
-                whiteSpace: 'pre-line',
-                lineHeight: 1.2,
-                textShadow: '0 0 18px rgba(233,30,99,0.35)',
-                zIndex: 3,
-              }}>
-                {t('enpista.track_reveal')}
-              </div>
-              <img
-                className="enpista-baja-logo-shadow"
-                src="/BAJA100.png"
-                alt=""
-                aria-hidden="true"
-              />
-              <div ref={courseStageRef} className="enpista-course-stage" style={{
-                position: 'absolute',
-                inset: 0,
-                zIndex: 2,
-                transformStyle: 'preserve-3d',
-              }}>
-                <div className="enpista-course-visual">
-                  <div
-                    role="img"
-                    aria-label="SCORE Baja 1000 course map"
-                    className="enpista-course-art"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      backgroundColor: 'var(--magenta)',
-                      WebkitMaskImage: 'url(/pistabaja1000.svg)',
-                      maskImage: 'url(/pistabaja1000.svg)',
-                      WebkitMaskSize: 'contain',
-                      maskSize: 'contain',
-                      WebkitMaskRepeat: 'no-repeat',
-                      maskRepeat: 'no-repeat',
-                      WebkitMaskPosition: 'center',
-                      maskPosition: 'center',
-                    }}
-                  />
-                  <CourseTrace stageRef={courseStageRef} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <svg className="hero-scroll-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M6 9l6 6 6-6" stroke="var(--magenta-bright)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
 
       <style>{`
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
+        @keyframes heroScrollWheel {
+          0% { opacity: 0; transform: translate(-50%, 0); }
+          30% { opacity: 1; }
+          100% { opacity: 0; transform: translate(-50%, 11px); }
         }
-        @keyframes pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(233,30,99,0.4); }
-          50% { box-shadow: 0 0 20px 5px rgba(233,30,99,0.2); }
+        @keyframes heroScrollChevron {
+          0%, 100% { transform: translateY(0); opacity: 0.35; }
+          50% { transform: translateY(5px); opacity: 1; }
         }
-        /* Static Baja 1000 logo used as the soft shadow behind the course map. */
-        .enpista-baja-logo-shadow {
+        .hero-scroll-mouse {
+          width: 26px;
+          height: 42px;
+          border: 2px solid rgba(255,255,255,0.5);
+          border-radius: 14px;
+          position: relative;
+        }
+        .hero-scroll-wheel {
           position: absolute;
+          top: 7px;
           left: 50%;
-          bottom: -6%;
-          z-index: 1;
-          width: 100%;
-          height: 120%;
-          object-fit: contain;
-          transform: translateX(-50%) perspective(900px) rotateX(72deg) scale(1.2);
-          transform-origin: center bottom;
-          filter: brightness(0) invert(1) blur(4px);
-          opacity: 0.1;
-          pointer-events: none;
+          width: 4px;
+          height: 9px;
+          border-radius: 2px;
+          background: var(--magenta-bright);
+          transform: translateX(-50%);
+          animation: heroScrollWheel 1.9s ease-in-out infinite;
         }
-        .enpista-course-stage {
-          transform-style: preserve-3d;
-          transform: rotateX(45deg) rotateZ(0deg) translateZ(22px);
-          will-change: transform;
-        }
-        .enpista-course-visual {
-          position: absolute;
-          inset: 0;
-          transform: scale(1.2);
-          transform-style: preserve-3d;
-        }
-        .enpista-course-art {
-          position: absolute;
-          inset: 0;
-          z-index: 1;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .enpista-course-stage { animation: none; }
-          .enpista-course-art { animation: none; }
+        .hero-scroll-chevron {
+          animation: heroScrollChevron 1.9s ease-in-out infinite;
         }
       `}</style>
     </div>
