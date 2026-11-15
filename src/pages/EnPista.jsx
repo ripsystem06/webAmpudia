@@ -6,6 +6,7 @@ const temporadas = [
   {
     year: '2026',
     carreras: [
+      { nombre: 'SCORE Baja 1000', fecha: 'Nov 2026', posicion: '2°', clase: 'SCORE TROPHY TRUCKS 4-WHEEL', tiempo: '16:30:07', estado: 'Completada', millas: '—', mph: '—' },
       { nombre: 'SCORE Baja 400', fecha: 'Sep 2026', posicion: '4°', clase: 'SCORE TROPHY TRUCKS 4-WHEEL', tiempo: '8:50:56.168', estado: 'Completada', millas: '—', mph: '—' },
       { nombre: 'SCORE BAJA 500', fecha: 'Jun 2026', posicion: '2°', clase: 'Trophy Truck', tiempo: '9:11:06.665', estado: 'Completada', millas: '—', mph: '—' },
       { nombre: 'SCORE San Felipe 250', fecha: 'Mar 2026', posicion: '10°', clase: '4WD Vehicles - Pro', tiempo: '6:48:20.865', estado: 'Completada', millas: '281.85', mph: '43.50' },
@@ -1089,7 +1090,7 @@ export default function EnPista() {
           {[
             { num: '2', label: t('enpista.campeonato_mundial') },
             { num: '1', label: t('enpista.triple_corona') },
-            { num: '8', label: t('enpista.podiums') },
+            { num: '9', label: t('enpista.podiums') },
             { num: '290:54', label: t('enpista.total_horas') },
             { num: '16,267', label: t('enpista.total_millas') },
           ].map(s => (
