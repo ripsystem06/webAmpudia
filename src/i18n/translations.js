@@ -281,6 +281,19 @@ const translations = {
     'legal.ultima_actualizacion_en': 'Last updated: May 29, 2026',
     'legal.derechos_reservados_en': 'All rights reserved.',
 
+    // ── Simulador ──
+    'nav.simulador': 'Simulador',
+    'simulador.title': 'SIMULADOR',
+    'simulador.sub': 'Prototipo 8-bit en primera persona — una carrera Baja en el Trophy Truck de Alan Ampudia.',
+    'simulador.hud_speed': 'VELOCIDAD',
+    'simulador.hud_distance': 'DISTANCIA',
+    'simulador.hud_on_track': 'EN PISTA',
+    'simulador.hud_off_track': 'FUERA DE PISTA',
+    'simulador.hud_crash': '¡CHOQUE!',
+    'simulador.controls_label': 'CONTROLES',
+    'simulador.controls': '↑ / W Acelerar · ↓ / S Frenar · ← → / A D Girar',
+    'simulador.tip': 'Evita las rocas y los cactus. Salirte del camino te frena.',
+
     // ── Race status values (used in data arrays) ──
     'race.victoria': 'Victoria',
     'race.completada': 'Completada',
@@ -567,6 +580,19 @@ const translations = {
     'legal.cookies_text': 'This website uses cookies to improve your browsing experience. Cookies are small text files stored on your device...',
     'legal.ultima_actualizacion_en': 'Last updated: May 29, 2026',
     'legal.derechos_reservados_en': 'All rights reserved.',
+
+    // ── Simulador ──
+    'nav.simulador': 'Simulator',
+    'simulador.title': 'SIMULATOR',
+    'simulador.sub': 'First-person 8-bit prototype — a Baja race in Alan Ampudia\'s Trophy Truck.',
+    'simulador.hud_speed': 'SPEED',
+    'simulador.hud_distance': 'DISTANCE',
+    'simulador.hud_on_track': 'ON TRACK',
+    'simulador.hud_off_track': 'OFF TRACK',
+    'simulador.hud_crash': 'CRASH!',
+    'simulador.controls_label': 'CONTROLS',
+    'simulador.controls': '↑ / W Accelerate · ↓ / S Brake · ← → / A D Steer',
+    'simulador.tip': 'Avoid the rocks and cacti. Driving off the road slows you down.',
 
     // ── Race status values ──
     'race.victoria': 'Win',

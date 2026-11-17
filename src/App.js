@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { LanguageProvider } from './context/LanguageContext';
+import { Analytics } from '@vercel/analytics/react';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import LogoIntro from './components/LogoIntro';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -10,6 +11,7 @@ import FueraDePista from './pages/FueraDePista';
 import Calendario from './pages/Calendario';
 import Tienda from './pages/Tienda';
 import Legal from './pages/Legal';
+import Simulador from './pages/Simulador';
 
 function scrollToTop() {
   // scrollTop directo → elude CSS scroll-behavior: smooth
@@ -39,11 +41,38 @@ function ScrollToTop() {
   return null;
 }
 
+function PageMeta() {
+  const { pathname } = useLocation();
+  const { lang } = useLanguage();
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  useEffect(() => {
+    const base = 'Alan Ampudia';
+    const names = {
+      '/': '',
+      '/en-pista': lang === 'es' ? 'En Pista' : 'On Track',
+      '/fuera-de-pista': lang === 'es' ? 'Fuera de Pista' : 'Off Track',
+      '/calendario': lang === 'es' ? 'Calendario' : 'Calendar',
+      '/tienda': lang === 'es' ? 'Tienda' : 'Shop',
+      '/legal': lang === 'es' ? 'Legal' : 'Legal',
+      '/simulador': lang === 'es' ? 'Simulador' : 'Simulator',
+    };
+    const name = names[pathname] ?? '';
+    document.title = name ? `${name} — ${base}` : base;
+  }, [pathname, lang]);
+
+  return null;
+}
+
 function App() {
   return (
     <LanguageProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <PageMeta />
         <LogoIntro />
         <Navbar />
         <Routes>
@@ -53,8 +82,10 @@ function App() {
           <Route path="/calendario" element={<Calendario />} />
           <Route path="/tienda" element={<Tienda />} />
           <Route path="/legal" element={<Legal />} />
+          <Route path="/simulador" element={<Simulador />} />
         </Routes>
         <Footer />
+        <Analytics />
       </BrowserRouter>
     </LanguageProvider>
   );
