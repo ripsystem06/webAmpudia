@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { LanguageProvider } from './context/LanguageContext';
 import LogoIntro from './components/LogoIntro';
 import Navbar from './components/Navbar';
@@ -55,6 +56,7 @@ function App() {
           <Route path="/legal" element={<Legal />} />
         </Routes>
         <Footer />
+        <Analytics />
       </BrowserRouter>
     </LanguageProvider>
   );
